@@ -7,37 +7,44 @@ import {
 } from 'class-validator';
 import { UserRole } from 'src/users/interfaces/user.interface';
 
-export class RegisterDto {
+export class EditChefDto {
+  @IsOptional()
   @IsString()
   firstName?: string;
 
+  @IsOptional()
   @IsString()
   lastName?: string;
 
-  @IsString()
+  @IsOptional()
   @IsOptional()
   profilePicture?: string;
 
+  @IsOptional()
   @IsEmail()
   email?: string;
 
   @IsString()
   @IsOptional()
-  role?: UserRole.CHEF | UserRole.CUSTOMER;
-
-  @IsString()
   @IsNotEmpty()
   @Matches(/^\+[1-9]\d{1,14}$/, {
     message: 'Phone number must be in international format (e.g., +123456789)',
   })
   phoneNumber: string;
-}
 
-export class ChefAuthDto {
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  @Matches(/^\+[1-9]\d{1,14}$/, {
-    message: 'Phone number must be in international format (e.g., +123456789)',
-  })
-  phoneNumber: string;
+  idCard: string;
+
+  @IsOptional()
+  @IsString()
+  bio: string;
+
+  @IsOptional()
+  @IsString()
+  certificates: string;
+
+  @IsOptional()
+  @IsString()
+  experience: string;
 }

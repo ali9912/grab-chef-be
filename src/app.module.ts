@@ -8,6 +8,8 @@ import { CustomerModule } from './customer/customer.module';
 import { EventModule } from './event/event.module';
 import { ReviewModule } from './review/review.module';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 
 @Module({
   imports: [
@@ -37,5 +39,8 @@ import { ThrottlerModule } from '@nestjs/throttler';
     EventModule,
     ReviewModule,
   ],
+  controllers: [AppController],
+  providers: [AppService],
+  exports: [AppService],
 })
 export class AppModule {}

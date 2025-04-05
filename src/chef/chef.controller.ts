@@ -36,10 +36,14 @@ export class ChefController {
   )
   async registerChef(
     @Body() registerChefDto: RegisterChefDto,
-    @UploadedFiles() files: { idCard: Express.Multer.File[], certifications: Express.Multer.File[] },
+    @UploadedFiles()
+    files: {
+      idCard: Express.Multer.File[];
+      certifications: Express.Multer.File[];
+    },
   ) {
     try {
-      return await this.chefService.registerChef(registerChefDto, files);
+      return await this.chefService.registerChef(registerChefDto);
     } catch (error) {
       throw new HttpException(
         error.message || 'Chef registration failed',

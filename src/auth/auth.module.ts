@@ -9,6 +9,8 @@ import { UsersModule } from '../users/users.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { OtpSchema } from './schemas/otp.schema';
 import { UtilsModule } from '../utils/utils.module';
+import { ChefModule } from 'src/chef/chef.module';
+import { UserSchema } from 'src/users/schemas/user.schema';
 
 @Module({
   imports: [
@@ -24,7 +26,9 @@ import { UtilsModule } from '../utils/utils.module';
       }),
     }),
     MongooseModule.forFeature([{ name: 'Otp', schema: OtpSchema }]),
+    MongooseModule.forFeature([{ name: 'User', schema: UserSchema }]),
     UsersModule,
+    ChefModule,
     UtilsModule,
   ],
   controllers: [AuthController],

@@ -21,14 +21,14 @@ export class ChefService {
 
   async registerChef(
     registerChefDto: RegisterChefDto,
-    files: { idCard: Express.Multer.File[], certifications: Express.Multer.File[] },
+    // files: { idCard: Express.Multer.File[], certifications: Express.Multer.File[] },
   ) {
-    if (!files.idCard || !files.certifications) {
-      throw new HttpException(
-        'ID card and certifications are required',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+    // if (!files.idCard || !files.certifications) {
+    //   throw new HttpException(
+    //     'ID card and certifications are required',
+    //     HttpStatus.BAD_REQUEST,
+    //   );
+    // }
 
     // Find user by ID
     const user = await this.usersService.findById(registerChefDto.userId);
@@ -37,27 +37,31 @@ export class ChefService {
     }
 
     // Check if user is already a chef
-    const existingChef = await this.chefModel.findOne({ userId: user._id }).exec();
+    const existingChef = await this.chefModel
+      .findOne({ userId: user._id })
+      .exec();
     if (existingChef) {
-      throw new HttpException('User is already registered as a chef', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'User is already registered as a chef',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     // Upload files to S3
-    const idCardUrl = await this.awsS3Service.upload(
-      files.idCard[0],
-      `chef/${user._id}/idCard`,
-    );
-    const certificationsUrl = await this.awsS3Service.upload(
-      files.certifications[0],
-      `chef/${user._id}/certifications`,
-    );
+    // const idCardUrl = await this.awsS3Service.upload(
+    //   files.idCard[0],
+    //   `chef/${user._id}/idCard`,
+    // );
+    // const certificationsUrl = await this.awsS3Service.upload(
+    //   files.certifications[0],
+    //   `chef/${user._id}/certifications`,
+    // );
 
     // Create chef profile
     const chef = new this.chefModel({
       userId: user._id,
-      idCardUrl,
-      certificationsUrl,
-      cuisine: registerChefDto.cuisine,
+      idCard: registerChefDto.idCard,
+      zip: registerChefDto.zip,
       bio: registerChefDto.bio,
       status: ChefVerificationStatus.PENDING,
     });
@@ -67,7 +71,10 @@ export class ChefService {
     // Update user role
     await this.usersService.updateRole(user._id.toString(), UserRole.CHEF);
 
-    return { message: 'Chef registered, awaiting admin verification' };
+    return {
+      status: 'success',
+      message: 'Chef registered, awaiting admin verification',
+    };
   }
 
   async getAllChefs(paginationDto: PaginationDto) {
@@ -75,7 +82,7 @@ export class ChefService {
     const skip = (page - 1) * limit;
 
     const query = { status: ChefVerificationStatus.APPROVED };
-    
+
     const [chefs, totalCount] = await Promise.all([
       this.chefModel
         .find(query)
@@ -86,10 +93,11 @@ export class ChefService {
       this.chefModel.countDocuments(query).exec(),
     ]);
 
-    const formattedChefs = chefs.map(chef => ({
+    const formattedChefs = chefs.map((chef) => ({
       id: chef._id,
-      name: `${(chef.userId as any).firstName} ${(chef.userId as any).lastName}`,
-      cuisine: chef.cuisine,
+      name: `${(chef.userId as any).firstName} ${
+        (chef.userId as any).lastName
+      }`,
       rating: chef.rating,
     }));
 
@@ -111,7 +119,9 @@ export class ChefService {
   }
 
   async addMenuItem(menuItemDto: MenuItemDto) {
-    const chef = await this.chefModel.findOne({ userId: menuItemDto.chefId }).exec();
+    const chef = await this.chefModel
+      .findOne({ userId: menuItemDto.chefId })
+      .exec();
     if (!chef) {
       throw new HttpException('Chef not found', HttpStatus.NOT_FOUND);
     }
@@ -136,14 +146,19 @@ export class ChefService {
       throw new HttpException('Menu item not found', HttpStatus.NOT_FOUND);
     }
 
-    const chef = await this.chefModel.findOne({ userId: menuItemDto.chefId }).exec();
+    const chef = await this.chefModel
+      .findOne({ userId: menuItemDto.chefId })
+      .exec();
     if (!chef) {
       throw new HttpException('Chef not found', HttpStatus.NOT_FOUND);
     }
 
     // Ensure chef is only updating their own menu items
     if (menuItem.chef.toString() !== (chef._id as any).toString()) {
-      throw new HttpException('Not authorized to update this menu item', HttpStatus.FORBIDDEN);
+      throw new HttpException(
+        'Not authorized to update this menu item',
+        HttpStatus.FORBIDDEN,
+      );
     }
 
     // Update menu item
@@ -160,5 +175,19 @@ export class ChefService {
     await menuItem.save();
 
     return { message: 'Menu item updated successfully' };
+  }
+
+  async findAndUpdateChefByUserId(userId: string, data: any = {}) {
+    const isChef = await this.chefModel.find({ userId });
+    if (!isChef.length) {
+      return await this.chefModel.create({ userId, ...data });
+    }
+    return await this.chefModel.findOneAndUpdate({ userId }, data, {
+      new: true,
+    });
+  }
+
+  async createChef(data: Chef) {
+    return this.chefModel.create(data);
   }
 }

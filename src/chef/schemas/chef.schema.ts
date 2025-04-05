@@ -8,21 +8,14 @@ export const ChefSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
-  idCardUrl: {
+  idCard: {
     type: String,
-    required: true,
   },
-  certificationsUrl: {
+  certificates: {
     type: String,
-    required: true,
-  },
-  cuisine: {
-    type: String,
-    required: true,
   },
   bio: {
     type: String,
-    required: true,
   },
   status: {
     type: String,
@@ -36,5 +29,9 @@ export const ChefSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now,
+  },
+  experience: {
+    type: Number,
+    default: 0,
   },
 });

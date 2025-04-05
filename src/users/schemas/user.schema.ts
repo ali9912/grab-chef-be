@@ -4,16 +4,19 @@ import { UserRole } from '../interfaces/user.interface';
 export const UserSchema = new mongoose.Schema({
   firstName: {
     type: String,
-    required: true,
+  },
+  profilePicture: {
+    type: String,
   },
   lastName: {
     type: String,
-    required: true,
   },
   email: {
     type: String,
-    required: true,
     unique: true,
+  },
+  password: {
+    type: String,
   },
   phoneNumber: {
     type: String,
@@ -32,5 +35,15 @@ export const UserSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now,
+  },
+  customer: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Customer',
+    unique: true,
+  },
+  chef: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Chef',
+    unique: true,
   },
 });

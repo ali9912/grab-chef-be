@@ -1,4 +1,6 @@
+import { Customer } from 'aws-sdk/clients/connect';
 import { Document, Types } from 'mongoose';
+import { Chef } from 'src/chef/interfaces/chef.interface';
 
 export enum UserRole {
   ADMIN = 'admin',
@@ -15,4 +17,8 @@ export interface User extends Document {
   role: UserRole;
   isVerified: boolean;
   createdAt: Date;
+  password: string;
+  chef?: Chef;
+  customer?: Customer;
+  experience?: number;
 }

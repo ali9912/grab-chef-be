@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsMongoId } from 'class-validator';
+import { IsString, IsNotEmpty, IsMongoId, IsOptional } from 'class-validator';
 
 export class RegisterChefDto {
   @IsMongoId()
@@ -7,9 +7,14 @@ export class RegisterChefDto {
 
   @IsString()
   @IsNotEmpty()
-  cuisine: string;
+  bio: string;
 
   @IsString()
-  @IsNotEmpty()
-  bio: string;
+  profilePic?: string;
+  
+  @IsString()
+  idCard?: string;
+
+  @IsString()
+  zip?: string;
 }

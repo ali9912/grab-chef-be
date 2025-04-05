@@ -9,11 +9,10 @@ export enum ChefVerificationStatus {
 
 export interface Chef extends Document {
   userId: Types.ObjectId;
-  idCardUrl: string;
-  certificationsUrl: string;
-  cuisine: string;
-  bio: string;
-  status: ChefVerificationStatus;
-  rating: number;
-  createdAt: Date;
+  idCard?: string;
+  certificates?: string;
+  bio?: string;
+  status?: ChefVerificationStatus;
+  rating?: number;
+  createdAt?: Date;
 }
