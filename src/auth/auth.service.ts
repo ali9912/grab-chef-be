@@ -15,6 +15,8 @@ import { LoginWithPhoneDto } from './dto/signup-with-phone.dto';
 import { comparePassword, encryptPassword } from 'src/helpers/password-helper';
 import { EditChefDto } from './dto/edit-chef.dto';
 import { ChefService } from 'src/chef/chef.service';
+import { RegisterCustomerDto } from './dto/register-customer.dto';
+import { AddPhoneNumberDTO } from './dto/add-phonenumber-dto.dto';
 
 @Injectable()
 export class AuthService {
@@ -142,19 +144,69 @@ export class AuthService {
     };
   }
 
-  async register(registerDto: RegisterDto) {
+  async registerCustomer(registerDto: RegisterCustomerDto) {
     // Check if user exists
-    const userExists = await this.usersService.findByPhone(
-      registerDto.phoneNumber,
-    );
+    const userExists = await this.usersService.findByEmail(registerDto.email);
+
     if (userExists) {
       throw new HttpException('User already exists', HttpStatus.BAD_REQUEST);
     }
     // Create user
-    const newUser = await this.usersService.create(registerDto);
-    // Generate and send OTP
-    const { code, message } = await this.sendOtp(newUser.phoneNumber);
-    return { status: 'success', message, code };
+    const newUser = await this.usersService.createCustomer(registerDto);
+
+    const token = this.generateToken(newUser);
+
+    return { status: 'success', message: 'User created successfully', token };
+  }
+
+  async addPhoneNumber(phoneNumberDto: AddPhoneNumberDTO, userInfo: User) {
+    const userId = userInfo._id.toString();
+    // Check if user exists
+    const userExists = await this.usersService.findById(userId);
+
+    if (!userExists) {
+      throw new HttpException('User donot exists', HttpStatus.NOT_FOUND);
+    }
+
+    const { message, code } = await this.sendOtp(phoneNumberDto.phoneNumber);
+
+    return { status: 'success', message, otp: code };
+  }
+
+  async verifyAndAddPhoneNumber(verifyOtpDto: VerifyOtpDto, userInfo: any) {
+    const userId = userInfo?._id?.toString();
+    const { phoneNumber, otp } = verifyOtpDto;
+
+    // Find user
+    const userExists = await this.usersService.findById(userId);
+
+    if (!userExists) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+
+    // Verify OTP
+    const otpRecord = await this.otpModel
+      .findOne({
+        phoneNumber,
+        code: otp,
+        expiresAt: { $gt: new Date() },
+      })
+      .exec();
+
+    if (!otpRecord) {
+      throw new HttpException('Invalid or expired OTP', HttpStatus.BAD_REQUEST);
+    }
+
+    // Update user verification status
+    await this.usersService.findAndUpdateById(userId, { phoneNumber });
+
+    // Delete OTP record
+    await this.otpModel.deleteOne({ _id: otpRecord._id }).exec();
+
+    return {
+      success: true,
+      message: 'Phone number added',
+    };
   }
 
   async loginWithPhoneNumber(loginWithPhoneNumber: LoginWithPhoneDto) {

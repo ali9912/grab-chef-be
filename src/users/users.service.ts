@@ -3,6 +3,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { User, UserRole } from './interfaces/user.interface';
 import { RegisterDto } from '../auth/dto/register.dto';
+import { RegisterCustomerDto } from 'src/auth/dto/register-customer.dto';
+import { encryptPassword } from 'src/helpers/password-helper';
 
 @Injectable()
 export class UsersService {
@@ -12,6 +14,18 @@ export class UsersService {
     const newUser = new this.userModel({
       role: UserRole.CUSTOMER, // Default role is customer
       ...registerDto,
+      isVerified: false,
+      createdAt: new Date(),
+    });
+    return await newUser.save();
+  }
+
+  async createCustomer(registerDto: RegisterCustomerDto): Promise<User> {
+    const password = await encryptPassword(registerDto.password);
+    const newUser = new this.userModel({
+      role: UserRole.CUSTOMER, // Default role is customer
+      ...registerDto,
+      password,
       isVerified: false,
       createdAt: new Date(),
     });

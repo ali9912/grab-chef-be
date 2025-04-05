@@ -17,6 +17,8 @@ import { JwtAuthChefGuard, JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RequestUser } from './interfaces/request-user.interface';
 import { LoginWithPhoneDto } from './dto/signup-with-phone.dto';
 import { EditChefDto } from './dto/edit-chef.dto';
+import { RegisterCustomerDto } from './dto/register-customer.dto';
+import { AddPhoneNumberDTO } from './dto/add-phonenumber-dto.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -51,10 +53,10 @@ export class AuthController {
     }
   }
 
-  @Post('register')
-  async register(@Body() registerDto: RegisterDto) {
+  @Post('customer/register')
+  async registerCustomer(@Body() registerDto: RegisterCustomerDto) {
     try {
-      return await this.authService.register(registerDto);
+      return await this.authService.registerCustomer(registerDto);
     } catch (error) {
       throw new HttpException(
         error.message || 'Registration failed',
@@ -63,25 +65,35 @@ export class AuthController {
     }
   }
 
-  @Post('login/phone')
-  async loginWithPhoneNumber(@Body() loginWithPhoneNumber: LoginWithPhoneDto) {
+  @UseGuards(JwtAuthGuard)
+  @Post('phone-number')
+  async addPhoneNumber(
+    @Body() addPhoneNumberDto: AddPhoneNumberDTO,
+    @Req() req: RequestUser,
+  ) {
     try {
-      return await this.authService.loginWithPhoneNumber(loginWithPhoneNumber);
+      const user = req.user;
+      return await this.authService.addPhoneNumber(addPhoneNumberDto, user);
     } catch (error) {
       throw new HttpException(
-        error.message || 'Login with phone failed',
+        error.message || 'Registration failed',
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
 
-  @Post('verify-otp')
-  async verifyOtp(@Body() verifyOtpDto: VerifyOtpDto) {
+  @UseGuards(JwtAuthGuard)
+  @Post('phone-number/verify')
+  async verifyAndAddPhoneNumber(
+    @Body() verifyOtpDto: VerifyOtpDto,
+    @Req() req: RequestUser,
+  ) {
     try {
-      return await this.authService.verifyOtp(verifyOtpDto);
+      const user = req.user;
+      return await this.authService.verifyAndAddPhoneNumber(verifyOtpDto, user);
     } catch (error) {
       throw new HttpException(
-        error.message || 'OTP verification failed',
+        error.message || 'Registration failed',
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -104,6 +116,18 @@ export class AuthController {
     }
   }
 
+  @Post('verify-otp')
+  async verifyOtp(@Body() verifyOtpDto: VerifyOtpDto) {
+    try {
+      return await this.authService.verifyOtp(verifyOtpDto);
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'OTP verification failed',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
     try {
@@ -111,6 +135,18 @@ export class AuthController {
     } catch (error) {
       throw new HttpException(
         error.message || 'Login failed',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post('login/phone')
+  async loginWithPhoneNumber(@Body() loginWithPhoneNumber: LoginWithPhoneDto) {
+    try {
+      return await this.authService.loginWithPhoneNumber(loginWithPhoneNumber);
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Login with phone failed',
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

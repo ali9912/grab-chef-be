@@ -13,7 +13,7 @@ export interface User extends Document {
   firstName: string;
   lastName: string;
   email: string;
-  phoneNumber: string;
+  phoneNumber?: string;
   role: UserRole;
   isVerified: boolean;
   createdAt: Date;
