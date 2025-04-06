@@ -41,5 +41,5 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd ${{ secrets.EC2_TARGET_DIR }}
-            npm install --production
+            npm install
             pm2 start dist/main.js --name grab-chef-be || pm2 restart grab-chef-be
