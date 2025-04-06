@@ -36,7 +36,7 @@ async function bootstrap() {
   // Global prefix for all routes
   app.setGlobalPrefix('api');
 
-  const port = 3001; // Using port 5000 for Replit
+  const port = 3000; // Using port 5000 for Replit
   await app.listen(port);
   console.log(`Application is running on: http://localhost:${port}/api`);
 }
