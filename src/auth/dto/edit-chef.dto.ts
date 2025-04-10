@@ -1,10 +1,18 @@
+import { Type } from 'class-transformer';
 import {
   IsString,
   IsEmail,
   IsNotEmpty,
   Matches,
   IsOptional,
+  IsEnum,
+  IsArray,
+  ValidateNested,
 } from 'class-validator';
+import {
+  LocationType,
+  LocationTypeClass,
+} from 'src/common/interfaces/location.interface';
 import { UserRole } from 'src/users/interfaces/user.interface';
 
 export class EditChefDto {
@@ -47,4 +55,10 @@ export class EditChefDto {
   @IsOptional()
   @IsString()
   experience: string;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => LocationTypeClass)
+  locations: LocationType[];
 }

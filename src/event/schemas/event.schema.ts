@@ -1,7 +1,7 @@
 import * as mongoose from 'mongoose';
 import { EventStatus, AttendanceStatus } from '../interfaces/event.interface';
 
-const MenuItemSchema = new mongoose.Schema({
+const MenuSchema = new mongoose.Schema({
   menuItemId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'MenuItem',
@@ -45,7 +45,7 @@ export const EventSchema = new mongoose.Schema({
     ref: 'Location',
     required: true,
   },
-  menuItems: [MenuItemSchema],
+  menuItems: [MenuSchema],
   dateTime: {
     type: Date,
     required: true,

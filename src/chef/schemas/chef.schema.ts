@@ -1,3 +1,8 @@
+import {
+  LocationSchema,
+  LocationType,
+  LocationTypeClass,
+} from 'src/common/interfaces/location.interface';
 import * as mongoose from 'mongoose';
 import { ChefVerificationStatus } from '../interfaces/chef.interface';
 
@@ -34,4 +39,5 @@ export const ChefSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  locations: [LocationSchema],
 });

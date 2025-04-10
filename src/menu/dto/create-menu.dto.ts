@@ -1,11 +1,17 @@
-import { IsString, IsNumber, IsArray, IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsMongoId, Min } from 'class-validator';
-import { MenuItemCategory } from '../interfaces/menu-item.interface';
+import {
+  IsString,
+  IsNumber,
+  IsArray,
+  IsBoolean,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsMongoId,
+  Min,
+} from 'class-validator';
+import { MenuItemCategory } from '../interfaces/menu.interfaces';
 
-export class MenuItemDto {
-  @IsMongoId()
-  @IsNotEmpty()
-  chefId: string;
-
+export class CreateMenuDto {
   @IsString()
   @IsNotEmpty()
   title: string;

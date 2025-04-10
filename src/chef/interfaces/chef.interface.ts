@@ -1,5 +1,6 @@
 import { Document } from 'mongoose';
 import { Types } from 'mongoose';
+import { LocationType } from 'src/common/interfaces/location.interface';
 
 export enum ChefVerificationStatus {
   PENDING = 'pending',
@@ -15,4 +16,6 @@ export interface Chef extends Document {
   status?: ChefVerificationStatus;
   rating?: number;
   createdAt?: Date;
+  experience?: number;
+  locations?: LocationType[];
 }
