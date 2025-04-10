@@ -1,7 +1,8 @@
+export class Menu {}
 import * as mongoose from 'mongoose';
-import { MenuItemCategory } from '../interfaces/menu-item.interface';
+import { MenuItemCategory } from '../interfaces/menu.interfaces';
 
-export const MenuItemSchema = new mongoose.Schema({
+export const MenuSchema = new mongoose.Schema({
   chef: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Chef',
@@ -20,9 +21,11 @@ export const MenuItemSchema = new mongoose.Schema({
     required: true,
     min: 0,
   },
-  images: [{
-    type: String,
-  }],
+  images: [
+    {
+      type: String,
+    },
+  ],
   category: {
     type: String,
     enum: Object.values(MenuItemCategory),
@@ -47,7 +50,7 @@ export const MenuItemSchema = new mongoose.Schema({
   },
 });
 
-MenuItemSchema.pre('save', function(next) {
+MenuSchema.pre('save', function (next) {
   this.updatedAt = new Date();
   next();
 });

@@ -10,6 +10,7 @@ import { ReviewModule } from './review/review.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { MenuModule } from './menu/menu.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { AppService } from './app.service';
     CustomerModule,
     EventModule,
     ReviewModule,
+    MenuModule,
   ],
   controllers: [AppController],
   providers: [AppService],

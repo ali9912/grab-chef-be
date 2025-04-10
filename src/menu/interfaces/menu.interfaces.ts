@@ -1,11 +1,12 @@
 import { Document, Types } from 'mongoose';
 
 export enum MenuItemCategory {
-  APPETIZERS = 'Appetizers',
-  MAIN_COURSE = 'Main Course',
-  DESSERTS = 'Desserts',
-  BEVERAGES = 'Beverages',
-  SIDES = 'Sides',
+  APPETIZERS = 'appetizers',
+  MAIN_COURSE = 'main-course',
+  DESSERTS = 'desserts',
+  BEVERAGES = 'beverages',
+  SIDES = 'sides',
+  SALADS = 'salads',
 }
 
 export interface MenuItem extends Document {
