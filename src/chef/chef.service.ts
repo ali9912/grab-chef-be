@@ -6,6 +6,7 @@ import { UsersService } from '../users/users.service';
 import { AwsS3Service } from '../utils/aws-s3.service';
 import { Chef, ChefVerificationStatus } from './interfaces/chef.interface';
 import { MenuItem } from 'src/menu/interfaces/menu.interfaces';
+import { extractChefInfo } from 'src/helpers/extract-data';
 
 @Injectable()
 export class ChefService {
@@ -17,8 +18,7 @@ export class ChefService {
   ) {}
 
   async getChefByUserId(userId: string) {
-    return await this.chefModel.find({ userId });
-    
+    return await this.chefModel.findOne({ userId });
   }
   async getAllChefs(paginationDto: PaginationDto) {
     const { page = 1, limit = 10 } = paginationDto;
@@ -60,6 +60,10 @@ export class ChefService {
 
     return { status: chef.status };
   }
+
+  findChefById = async (chefId: string) => {
+    return extractChefInfo(await this.chefModel.findById(chefId));
+  };
 
   async findAndUpdateChefByUserId(userId: string, data: any = {}) {
     const isChef = await this.chefModel.find({ userId });

@@ -1,6 +1,6 @@
-export class Menu {}
 import * as mongoose from 'mongoose';
 import { MenuItemCategory } from '../interfaces/menu.interfaces';
+import { Chef } from 'src/chef/interfaces/chef.interface';
 
 export const MenuSchema = new mongoose.Schema({
   chef: {

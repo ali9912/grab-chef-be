@@ -50,7 +50,7 @@ export class AuthService {
     const { phoneNumber, otp } = verifyOtpDto;
 
     // Find user
-    const user = await this.usersService.findByPhone(phoneNumber);
+    const user = await (await this.usersService.findByPhone(phoneNumber))?.populate(['chef', "customer"]);
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }

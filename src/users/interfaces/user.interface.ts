@@ -14,11 +14,11 @@ export interface User extends Document {
   lastName: string;
   email: string;
   phoneNumber?: string;
+  profilePicture?: string;
   role: UserRole;
   isVerified: boolean;
   createdAt: Date;
   password: string;
   chef?: Chef;
   customer?: Customer;
-  experience?: number;
 }

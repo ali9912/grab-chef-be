@@ -40,23 +40,74 @@ export class MenuController {
     }
   }
 
-  @Get()
-  findAll() {
-    return this.menuService.findAll();
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CHEF)
+  update(
+    @Param('id') id: string,
+    @Body() updateMenuDto: UpdateMenuDto,
+    @Req() req: RequestUser,
+  ) {
+    try {
+      const user = req.user;
+      return this.menuService.update(id, updateMenuDto, user);
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to edit menu.',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CHEF)
+  getCurrentChefMenu(@Req() req: RequestUser) {
+    try {
+      const user = req.user;
+      return this.menuService.getCurrentChefMenus(req.user);
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to get chef menu.',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.menuService.findOne(+id);
+    try {
+      return this.menuService.getMenuById(id);
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to get menu.',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateMenuDto: UpdateMenuDto) {
-    return this.menuService.update(+id, updateMenuDto);
+  @Get('chef/:chefId')
+  @UseGuards(JwtAuthGuard)
+  getAllMenuByChef(@Param('chefId') chefId: string) {
+    try {
+      return this.menuService.getAllMenuByChef(chefId);
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to get chef menu.',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.menuService.remove(+id);
+    try {
+      return this.menuService.remove(id);
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to get menu.',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 }

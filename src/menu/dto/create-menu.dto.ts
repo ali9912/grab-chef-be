@@ -12,10 +12,6 @@ import {
 import { MenuItemCategory } from '../interfaces/menu.interfaces';
 
 export class CreateMenuDto {
-  @IsMongoId()
-  @IsNotEmpty()
-  chefId: string;
-
   @IsString()
   @IsNotEmpty()
   title: string;
