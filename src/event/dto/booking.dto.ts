@@ -1,5 +1,16 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsDateString, IsMongoId, IsNotEmpty, IsNumber, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsDateString,
+  IsMongoId,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+  ValidateNested,
+} from 'class-validator';
+import { LocationDto } from 'src/common/interfaces/location.interface';
 
 class MenuItemDto {
   @IsMongoId()
@@ -17,9 +28,13 @@ export class BookingDto {
   @IsNotEmpty()
   chefId: string;
 
-  @IsMongoId()
+  @IsString()
+  area: string;
+
+  @ValidateNested({ each: true })
+  @Type(() => LocationDto)
   @IsNotEmpty()
-  locationId: string;
+  fullAddress: LocationDto;
 
   @IsArray()
   @ValidateNested({ each: true })
@@ -27,11 +42,10 @@ export class BookingDto {
   @IsNotEmpty()
   menuItems: MenuItemDto[];
 
-  @IsDateString()
   @IsNotEmpty()
-  dateTime: string;
+  date: string;
 
   @IsString()
-  @IsOptional()
-  specialRequests?: string;
+  @IsNotEmpty()
+  time: string;
 }

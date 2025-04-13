@@ -1,7 +1,7 @@
 import {
   LocationSchema,
   LocationType,
-  LocationTypeClass,
+  LocationDto,
 } from 'src/common/interfaces/location.interface';
 import * as mongoose from 'mongoose';
 import { ChefVerificationStatus } from '../interfaces/chef.interface';

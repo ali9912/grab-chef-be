@@ -1,4 +1,5 @@
 import { Document, Types } from 'mongoose';
+import { LocationType } from 'src/common/interfaces/location.interface';
 
 export enum EventStatus {
   PENDING = 'pending',
@@ -27,15 +28,15 @@ export interface Attendance {
 export interface Event extends Document {
   customer: Types.ObjectId;
   chef: Types.ObjectId;
-  location: Types.ObjectId;
+  area: string;
+  fullAddress: LocationType;
   menuItems: MenuItem[];
-  dateTime: Date;
-  specialRequests?: string;
+  date: Date;
+  time: string;
   status: EventStatus;
   rejectionReason?: string;
   attendance?: Attendance;
   totalAmount: number;
-  tax: number;
   createdAt: Date;
   updatedAt: Date;
 }

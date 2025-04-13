@@ -11,7 +11,7 @@ import {
 } from 'class-validator';
 import {
   LocationType,
-  LocationTypeClass,
+  LocationDto,
 } from 'src/common/interfaces/location.interface';
 import { UserRole } from 'src/users/interfaces/user.interface';
 
@@ -59,6 +59,6 @@ export class EditChefDto {
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => LocationTypeClass)
+  @Type(() => LocationDto)
   locations: LocationType[];
 }
