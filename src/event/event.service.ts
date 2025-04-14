@@ -20,7 +20,7 @@ export class EventService {
     @InjectModel('Event') private readonly eventModel: Model<Event>,
     private readonly chefService: ChefService,
     private readonly customerService: CustomerService,
-  ) {}
+  ) { }
 
   async createBooking(customerId: string, bookingDto: BookingDto) {
     // Create event
@@ -41,10 +41,6 @@ export class EventService {
     return { message: 'Booking request sent to chef' };
   }
 
-  async getChefBookings(userId: string) {
-    const events = await this.eventModel.find({ chef: userId });
-    return { success: true, events };
-  }
 
   async confirmBooking(
     chefId: string,
@@ -105,15 +101,6 @@ export class EventService {
     return { message: 'Booking Cancelled', success: true };
   }
 
-  async getBookingStatus(eventId: string) {
-    const event = await this.eventModel.findById(eventId).exec();
-    if (!event) {
-      throw new HttpException('Event not found', HttpStatus.NOT_FOUND);
-    }
-
-    return { status: event.status };
-  }
-
   async markAttendance(
     chefId: string,
     eventId: string,
@@ -135,8 +122,8 @@ export class EventService {
     // Update attendance status
     event.attendance = {
       status: attendanceDto.status as AttendanceStatus,
-      remarks: attendanceDto.remarks,
-      markedAt: new Date(),
+      markedAt: attendanceDto.markedAt || (new Date()).toDateString(),
+      location: attendanceDto.location
     };
 
     await event.save();
@@ -147,9 +134,9 @@ export class EventService {
   async getEvents(
     userId: string,
     userRole: UserRole,
-    paginationDto: PaginationDto,
+    urlQuery: PaginationDto,
   ) {
-    const { page = 1, limit = 10 } = paginationDto;
+    const { page = 1, limit = 10, status = "" } = urlQuery;
     const skip = (page - 1) * limit;
 
     let query = {};
@@ -161,6 +148,10 @@ export class EventService {
       query = { chef: userId };
     }
 
+    if (!!status) {
+      query = { ...query, status: urlQuery.status }
+    }
+
     const [events, totalCount] = await Promise.all([
       this.eventModel
         .find(query)
@@ -168,19 +159,17 @@ export class EventService {
         .populate('customer', 'firstName lastName')
         .skip(skip)
         .limit(limit)
-        .sort({ dateTime: -1 })
+        .sort({ date: -1 })
         .exec(),
       this.eventModel.countDocuments(query).exec(),
     ]);
 
     const formattedEvents = events.map((event) => ({
       eventId: event._id,
-      chefName: `${(event.chef as any).firstName} ${
-        (event.chef as any).lastName
-      }`,
-      customerName: `${(event.customer as any).firstName} ${
-        (event.customer as any).lastName
-      }`,
+      chefName: `${(event.chef as any).firstName} ${(event.chef as any).lastName
+        }`,
+      customerName: `${(event.customer as any).firstName} ${(event.customer as any).lastName
+        }`,
       status: event.status,
       date: event.date,
     }));
@@ -198,13 +187,12 @@ export class EventService {
       .findById(eventId)
       .populate('chef', 'firstName lastName')
       .populate('customer', 'firstName lastName')
-      .populate('location')
       .exec();
 
     if (!event) {
       throw new HttpException('Event not found', HttpStatus.NOT_FOUND);
     }
 
-    return event;
+    return { event, success: true };
   }
 }

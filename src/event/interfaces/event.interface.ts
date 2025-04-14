@@ -21,8 +21,8 @@ export interface MenuItem {
 
 export interface Attendance {
   status: AttendanceStatus;
-  remarks?: string;
-  markedAt: Date;
+  markedAt: string;
+  location?: LocationType;
 }
 
 export interface Event extends Document {

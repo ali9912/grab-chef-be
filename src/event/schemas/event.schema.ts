@@ -21,9 +21,7 @@ const AttendanceSchema = new mongoose.Schema({
     enum: Object.values(AttendanceStatus),
     required: true,
   },
-  remarks: {
-    type: String,
-  },
+  location: LocationSchema,
   markedAt: {
     type: Date,
     default: Date.now,
@@ -42,7 +40,7 @@ export const EventSchema = new mongoose.Schema({
     required: true,
   },
   area: { type: String, required: true },
-  
+
   fullAddress: LocationSchema,
 
   menuItems: [MenuSchema],

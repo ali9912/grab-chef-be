@@ -24,7 +24,7 @@ import { RequestUser } from 'src/auth/interfaces/request-user.interface';
 
 @Controller('event')
 export class EventController {
-  constructor(private readonly eventService: EventService) {}
+  constructor(private readonly eventService: EventService) { }
 
   @Post('create')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -43,19 +43,6 @@ export class EventController {
     }
   }
 
-  @Get('chef')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.CHEF)
-  async getChefBookings(@Req() req: RequestUser) {
-    try {
-      return await this.eventService.getChefBookings(req.user._id.toString());
-    } catch (error) {
-      throw new HttpException(
-        error.message || 'Failed to confirm booking',
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
 
   @Post(':eventId/confirm')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -100,11 +87,11 @@ export class EventController {
     }
   }
 
-  @Get('booking/:eventId/status')
+  @Get('detail/:eventId')
   @UseGuards(JwtAuthGuard)
-  async getBookingStatus(@Param('eventId') eventId: string) {
+  async getEventById(@Param('eventId') eventId: string) {
     try {
-      return await this.eventService.getBookingStatus(eventId);
+      return await this.eventService.getEventById(eventId);
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to get booking status',
@@ -137,12 +124,12 @@ export class EventController {
 
   @Get('list')
   @UseGuards(JwtAuthGuard)
-  async getEvents(@Query() paginationDto: PaginationDto, @Request() req) {
+  async getEvents(@Query() queryDTO: PaginationDto, @Req() req: RequestUser) {
     try {
       return await this.eventService.getEvents(
-        req.user.userId,
+        req.user._id.toString(),
         req.user.role,
-        paginationDto,
+        queryDTO,
       );
     } catch (error) {
       throw new HttpException(

@@ -1,7 +1,15 @@
-import { IsInt, IsOptional, Min } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
 import { Type } from 'class-transformer';
+import { EventStatus } from 'src/event/interfaces/event.interface';
 
-export class PaginationDto {
+export class GetChefEventsQueryType {
+  @IsString()
+  @IsOptional()
+  @IsEnum(EventStatus)
+  status?: string
+}
+
+export class PaginationDto extends GetChefEventsQueryType{
   @IsInt()
   @Min(1)
   @IsOptional()
