@@ -1,8 +1,9 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString, ValidateIf } from 'class-validator';
 
 enum BookingStatus {
   CONFIRMED = 'confirmed',
   REJECTED = 'rejected',
+  CANCELLED = 'cancelled',
 }
 
 export class ConfirmBookingDto {
@@ -10,7 +11,18 @@ export class ConfirmBookingDto {
   @IsNotEmpty()
   status: string;
 
+  @ValidateIf((o) => o.status === BookingStatus.REJECTED) // Only validate if status is REJECTED
   @IsString()
-  @IsOptional()
+  @IsNotEmpty({ message: 'Reason is required when status is REJECTED' })
+  reason?: string;
+}
+
+export class CancelBookingDto {
+  @IsEnum(BookingStatus)
+  @IsNotEmpty()
+  status: string;
+
+  @IsString()
+  @IsNotEmpty({ message: 'Reason is required when status is REJECTED' })
   reason?: string;
 }

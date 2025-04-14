@@ -1,0 +1,1 @@
+export type FolderType = 'menu' | 'event' | 'profile-photo' | "temp"

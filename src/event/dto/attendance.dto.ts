@@ -1,5 +1,6 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsDateString, IsEnum, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { AttendanceStatus } from '../interfaces/event.interface';
+import { LocationDto } from 'src/common/interfaces/location.interface';
 
 export class AttendanceDto {
   @IsEnum(AttendanceStatus)
@@ -7,6 +8,9 @@ export class AttendanceDto {
   status: string;
 
   @IsString()
+  @IsDateString()
+  markedAt?: string;
+
   @IsOptional()
-  remarks?: string;
+  location: LocationDto;
 }

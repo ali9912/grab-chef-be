@@ -21,17 +21,9 @@ export class MenuService {
   */
   async create(createMenuDto: CreateMenuDto, userInfo: User) {
     const userId = userInfo._id.toString();
-    const chef = await this.chefService.getChefByUserId(userId);
-    if (!chef) {
-      return new HttpException(
-        "Chef by this userId doen't exists",
-        HttpStatus.NOT_FOUND,
-      );
-    }
-    const chefId = chef._id;
     const menu = await this.menuModel.create({
       ...createMenuDto,
-      chef: chefId,
+      chef: userId,
     });
     return {
       menu,

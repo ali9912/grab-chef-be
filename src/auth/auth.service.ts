@@ -50,7 +50,9 @@ export class AuthService {
     const { phoneNumber, otp } = verifyOtpDto;
 
     // Find user
-    const user = await (await this.usersService.findByPhone(phoneNumber))?.populate(['chef', "customer"]);
+    const user = await (
+      await this.usersService.findByPhone(phoneNumber)
+    )?.populate(['chef', 'customer']);
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
@@ -156,7 +158,12 @@ export class AuthService {
 
     const token = this.generateToken(newUser);
 
-    return { status: 'success', message: 'User created successfully', token };
+    return {
+      status: 'success',
+      message: 'User created successfully',
+      token,
+      user: newUser,
+    };
   }
 
   async addPhoneNumber(phoneNumberDto: AddPhoneNumberDTO, userInfo: User) {

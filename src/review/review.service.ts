@@ -15,7 +15,7 @@ export class ReviewService {
 
   async submitReview(customerId: string, eventId: string, reviewDto: ReviewDto) {
     // Get event
-    const event = await this.eventService.getEventById(eventId);
+    const {event} = await this.eventService.getEventById(eventId);
     
     // Verify event exists and belongs to customer
     if (event.customer.toString() !== customerId) {

@@ -7,7 +7,7 @@ export type LocationType = {
   longitude?: number;
 };
 
-export class LocationTypeClass {
+export class LocationDto {
   @IsString()
   name: string;
 
