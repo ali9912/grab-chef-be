@@ -148,8 +148,12 @@ export class EventService {
     const [events, totalCount] = await Promise.all([
       this.eventModel
         .find(query)
-        .populate('chef', 'firstName lastName')
-        .populate('customer', 'firstName lastName')
+        .populate('chef')
+        .populate('customer')
+        .populate({
+          path: 'menuItems.menuItemId', // Populate menuItemId inside menuItems
+          model: 'Menu', // Reference the MenuItem model
+        })
         .skip(skip)
         .limit(limit)
         .sort({ date: -1 })
@@ -157,31 +161,25 @@ export class EventService {
       this.eventModel.countDocuments(query).exec(),
     ]);
 
-    const formattedEvents = events.map((event) => ({
-      eventId: event._id,
-      chefName: `${(event.chef as any).firstName} ${
-        (event.chef as any).lastName
-      }`,
-      customerName: `${(event.customer as any).firstName} ${
-        (event.customer as any).lastName
-      }`,
-      status: event.status,
-      date: event.date,
-    }));
-
-    return {
-      events: formattedEvents,
+    const response = {
+      events,
       totalCount,
       page,
       limit,
     };
+
+    return response;
   }
 
   async getEventById(eventId: string) {
     const event = await this.eventModel
       .findById(eventId)
-      .populate('chef', 'firstName lastName')
-      .populate('customer', 'firstName lastName')
+      .populate('chef')
+      .populate('customer')
+      .populate({
+        path: 'menuItems.menuItemId', // Populate menuItemId inside menuItems
+        model: 'Menu', // Reference the MenuItem model
+      })
       .exec();
 
     if (!event) {
