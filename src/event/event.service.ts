@@ -20,11 +20,10 @@ export class EventService {
     @InjectModel('Event') private readonly eventModel: Model<Event>,
     private readonly chefService: ChefService,
     private readonly customerService: CustomerService,
-  ) { }
+  ) {}
 
   async createBooking(customerId: string, bookingDto: BookingDto) {
     // Create event
-    console.log(customerId);
     const event = new this.eventModel({
       customer: customerId,
       chef: bookingDto.chefId,
@@ -40,7 +39,6 @@ export class EventService {
 
     return { message: 'Booking request sent to chef' };
   }
-
 
   async confirmBooking(
     chefId: string,
@@ -122,8 +120,8 @@ export class EventService {
     // Update attendance status
     event.attendance = {
       status: attendanceDto.status as AttendanceStatus,
-      markedAt: attendanceDto.markedAt || (new Date()).toDateString(),
-      location: attendanceDto.location
+      markedAt: attendanceDto.markedAt || new Date().toDateString(),
+      location: attendanceDto.location,
     };
 
     await event.save();
@@ -131,12 +129,8 @@ export class EventService {
     return { message: 'Attendance marked' };
   }
 
-  async getEvents(
-    userId: string,
-    userRole: UserRole,
-    urlQuery: PaginationDto,
-  ) {
-    const { page = 1, limit = 10, status = "" } = urlQuery;
+  async getEvents(userId: string, userRole: UserRole, urlQuery: PaginationDto) {
+    const { page = 1, limit = 10, status } = urlQuery;
     const skip = (page - 1) * limit;
 
     let query = {};
@@ -147,9 +141,8 @@ export class EventService {
     } else if (userRole === UserRole.CHEF) {
       query = { chef: userId };
     }
-
-    if (!!status) {
-      query = { ...query, status: urlQuery.status }
+    if (status) {
+      query = { ...query, status };
     }
 
     const [events, totalCount] = await Promise.all([
@@ -166,10 +159,12 @@ export class EventService {
 
     const formattedEvents = events.map((event) => ({
       eventId: event._id,
-      chefName: `${(event.chef as any).firstName} ${(event.chef as any).lastName
-        }`,
-      customerName: `${(event.customer as any).firstName} ${(event.customer as any).lastName
-        }`,
+      chefName: `${(event.chef as any).firstName} ${
+        (event.chef as any).lastName
+      }`,
+      customerName: `${(event.customer as any).firstName} ${
+        (event.customer as any).lastName
+      }`,
       status: event.status,
       date: event.date,
     }));
