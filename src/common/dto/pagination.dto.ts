@@ -21,4 +21,9 @@ export class PaginationDto extends GetChefEventsQueryType{
   @IsOptional()
   @Type(() => Number)
   limit?: number;
+
+  @IsString()
+  @IsOptional()
+  @IsEnum(EventStatus)
+  status?: string;
 }
