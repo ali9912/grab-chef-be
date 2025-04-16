@@ -13,6 +13,7 @@ import { PaginationDto } from '../common/dto/pagination.dto';
 import { ChefService } from '../chef/chef.service';
 import { CustomerService } from '../customer/customer.service';
 import { UserRole } from '../users/interfaces/user.interface';
+import { formatDateToYYYYMMDD } from 'src/helpers/date-formatter';
 
 @Injectable()
 export class EventService {
@@ -41,7 +42,7 @@ export class EventService {
   }
 
   async confirmBooking(
-    chefId: string,
+    userId: string,
     eventId: string,
     confirmBookingDto: ConfirmBookingDto,
   ) {
@@ -51,12 +52,14 @@ export class EventService {
     }
 
     // Ensure event belongs to chef
-    if (event.chef.toString() !== chefId) {
+    if (event.chef.toString() !== userId) {
       throw new HttpException(
         'Event does not belong to chef',
         HttpStatus.FORBIDDEN,
       );
     }
+
+    const chef = await this.chefService.getChefByUserId(userId);
 
     // Update event status
     event.status =
@@ -69,6 +72,13 @@ export class EventService {
     }
 
     await event.save();
+
+    if (confirmBookingDto.status !== 'rejected') {
+      await this.chefService.addEventToCalendar(chef, {
+        date: formatDateToYYYYMMDD(event.date),
+        timeSlots: [event.time],
+      });
+    }
 
     return { message: 'Booking status updated' };
   }

@@ -8,6 +8,11 @@ export enum ChefVerificationStatus {
   REJECTED = 'rejected',
 }
 
+export type BusyDaysType = {
+  date: Date;
+  timeSlots: string[];
+};
+
 export interface Chef extends Document {
   userId: Types.ObjectId;
   idCard?: string;
@@ -18,4 +23,5 @@ export interface Chef extends Document {
   createdAt?: Date;
   experience?: number;
   locations?: LocationType[];
+  busyDays?: BusyDaysType[];
 }

@@ -7,6 +7,7 @@ import { AwsS3Service } from '../utils/aws-s3.service';
 import { Chef, ChefVerificationStatus } from './interfaces/chef.interface';
 import { MenuItem } from 'src/menu/interfaces/menu.interfaces';
 import { extractChefInfo } from 'src/helpers/extract-data';
+import { BusyDataDto } from './dto/busy-data-dto';
 
 @Injectable()
 export class ChefService {
@@ -73,6 +74,80 @@ export class ChefService {
     return await this.chefModel.findOneAndUpdate({ userId }, data, {
       new: true,
     });
+  }
+
+  async getChefBusySchedule(userId: string) {
+    const chef = await this.chefModel.findOne({ userId });
+    if (!chef) {
+      throw new HttpException(
+        'Chef with the given user id not exists',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    const busyDays = chef.busyDays;
+    return { busyDays, success: true };
+  }
+
+  async getChefBusyScheduleById(userId: string) {
+    const chef = await this.chefModel.findOne({ userId });
+    if (!chef) {
+      throw new HttpException(
+        'Chef with the given user id not exists',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    const busyDays = chef.busyDays;
+    return { busyDays, success: true };
+  }
+
+  async addEventToChefCalendar(busyDataDto: BusyDataDto, userId: string) {
+    console.log('USERID------', userId);
+    const chef = await this.chefModel.findOne({ userId });
+    if (!chef) {
+      throw new HttpException(
+        'Chef with the given user id not exists',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    // Add the new busy day
+    const busyDays = await this.addEventToCalendar(chef, busyDataDto);
+
+    return {
+      busyDays,
+      success: true,
+      message: "Chef's schedule updated successfully.",
+    };
+  }
+
+  async addEventToCalendar(chef: Chef, busyDataDto: BusyDataDto) {
+    // Check if the date already exists in the busyDays array
+    const existingBusyDay = chef.busyDays.find(
+      (day) =>
+        day.date.toISOString() === new Date(busyDataDto.date).toISOString(),
+    );
+
+    if (existingBusyDay) {
+      // Check for overlapping time slots
+      const overlappingSlots = busyDataDto.timeSlots.find((slot) => {
+        return existingBusyDay.timeSlots.includes(slot);
+      });
+
+      if (overlappingSlots) {
+        throw new HttpException(
+          `Time ${overlappingSlots} slots for this date overlap with existing schedule`,
+          HttpStatus.CONFLICT,
+        );
+      }
+
+      // If no overlap, merge the new time slots with the existing ones
+      existingBusyDay.timeSlots.push(...busyDataDto.timeSlots);
+      existingBusyDay.timeSlots = [...new Set(existingBusyDay.timeSlots)]; // Ensure uniqueness
+    } else {
+      // Add the new busy day
+      chef.busyDays.push({ ...busyDataDto, date: new Date(busyDataDto.date) });
+    }
+
+    await chef.save();
   }
 
   // async addMenuItem(menuItemDto: MenuItemDto) {
