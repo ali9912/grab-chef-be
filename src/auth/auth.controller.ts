@@ -7,6 +7,7 @@ import {
   UseGuards,
   Req,
   Put,
+  Param,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ChefAuthDto, RegisterDto } from './dto/register.dto';
@@ -65,15 +66,15 @@ export class AuthController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Post('phone-number')
+  // @UseGuards(JwtAuthGuard)
+  @Post('phone-number/:userId')
   async addPhoneNumber(
+    @Param('userId') userId: string,
     @Body() addPhoneNumberDto: AddPhoneNumberDTO,
     @Req() req: RequestUser,
   ) {
     try {
-      const user = req.user;
-      return await this.authService.addPhoneNumber(addPhoneNumberDto, user);
+      return await this.authService.addPhoneNumber(addPhoneNumberDto, userId);
     } catch (error) {
       throw new HttpException(
         error.message || 'Registration failed',
@@ -83,14 +84,14 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Post('phone-number/verify')
+  @Post('phone-number/verify/:userId')
   async verifyAndAddPhoneNumber(
+    @Param('userId') userId: string,
     @Body() verifyOtpDto: VerifyOtpDto,
     @Req() req: RequestUser,
   ) {
     try {
-      const user = req.user;
-      return await this.authService.verifyAndAddPhoneNumber(verifyOtpDto, user);
+      return await this.authService.verifyAndAddPhoneNumber(verifyOtpDto, userId);
     } catch (error) {
       throw new HttpException(
         error.message || 'Registration failed',

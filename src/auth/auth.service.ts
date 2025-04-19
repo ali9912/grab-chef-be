@@ -166,8 +166,8 @@ export class AuthService {
     };
   }
 
-  async addPhoneNumber(phoneNumberDto: AddPhoneNumberDTO, userInfo: User) {
-    const userId = userInfo._id.toString();
+  async addPhoneNumber(phoneNumberDto: AddPhoneNumberDTO, userId: string) {
+
     // Check if user exists
     const userExists = await this.usersService.findById(userId);
 
@@ -180,8 +180,7 @@ export class AuthService {
     return { status: 'success', message, otp: code };
   }
 
-  async verifyAndAddPhoneNumber(verifyOtpDto: VerifyOtpDto, userInfo: any) {
-    const userId = userInfo?._id?.toString();
+  async verifyAndAddPhoneNumber(verifyOtpDto: VerifyOtpDto, userId: string) {
     const { phoneNumber, otp } = verifyOtpDto;
 
     // Find user
