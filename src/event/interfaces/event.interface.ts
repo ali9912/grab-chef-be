@@ -39,4 +39,10 @@ export interface Event extends Document {
   totalAmount: number;
   createdAt: Date;
   updatedAt: Date;
+  orderId: number;
+}
+
+export interface Counter extends Document {
+  name: string;
+  value: number;
 }
