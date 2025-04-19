@@ -83,7 +83,7 @@ export class AuthController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
+  // @UseGuards(JwtAuthGuard)
   @Post('phone-number/verify/:userId')
   async verifyAndAddPhoneNumber(
     @Param('userId') userId: string,
