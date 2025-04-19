@@ -5,6 +5,7 @@ import {
   Event,
   EventStatus,
   AttendanceStatus,
+  Counter,
 } from './interfaces/event.interface';
 import { BookingDto } from './dto/booking.dto';
 import { CancelBookingDto, ConfirmBookingDto } from './dto/confirm-booking.dto';
@@ -18,13 +19,20 @@ import { UserRole } from '../users/interfaces/user.interface';
 export class EventService {
   constructor(
     @InjectModel('Event') private readonly eventModel: Model<Event>,
+    @InjectModel('Counter') private readonly Counter: Model<Counter>,
     private readonly chefService: ChefService,
     private readonly customerService: CustomerService,
   ) {}
 
   async createBooking(customerId: string, bookingDto: BookingDto) {
     // Create event
-    const event = new this.eventModel({
+    const counter = await this.Counter.findOneAndUpdate(
+      { name: 'eventOrderId' }, // Counter name
+      { $inc: { value: 1 } }, // Increment the counter
+      { new: true, upsert: true }, // Create if it doesn't exist
+    );
+
+    const event = this.eventModel.create({
       customer: customerId,
       chef: bookingDto.chefId,
       area: bookingDto.area,
@@ -33,11 +41,10 @@ export class EventService {
       date: new Date(bookingDto.date),
       time: bookingDto.time,
       status: EventStatus.PENDING,
+      orderId: counter.value, // Assign the incremented value to orderId
     });
 
-    await event.save();
-
-    return { message: 'Booking request sent to chef' };
+    return { message: 'Booking request sent to chef', event };
   }
 
   async confirmBooking(

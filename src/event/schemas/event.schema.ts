@@ -2,6 +2,11 @@ import * as mongoose from 'mongoose';
 import { EventStatus, AttendanceStatus } from '../interfaces/event.interface';
 import { LocationSchema } from 'src/common/interfaces/location.interface';
 
+export const CounterSchema = new mongoose.Schema({
+  name: { type: String, required: true, unique: true },
+  value: { type: Number, required: true, default: 100000 }, // Start from 100000
+});
+
 const MenuSchema = new mongoose.Schema({
   menuItemId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -44,6 +49,13 @@ export const EventSchema = new mongoose.Schema({
   fullAddress: LocationSchema,
 
   menuItems: [MenuSchema],
+
+  orderId: {
+    type: Number,
+    unique: true,
+    required: true,
+  },
+
   date: {
     type: Date,
     required: true,
@@ -52,28 +64,38 @@ export const EventSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+
   status: {
     type: String,
     enum: Object.values(EventStatus),
     default: EventStatus.PENDING,
   },
+
   rejectionReason: {
     type: String,
   },
+
   attendance: AttendanceSchema,
+
   totalAmount: {
     type: Number,
     default: 0,
   },
+
   createdAt: {
     type: Date,
     default: Date.now,
   },
+
   updatedAt: {
     type: Date,
     default: Date.now,
   },
 });
+
+export const Counter = mongoose.model('Counter', CounterSchema);
+
+// Pre-save hook to generate incremental orderId
 
 // Pre-save hook to calculate total amount and tax
 // EventSchema.pre('save', async function (next) {
