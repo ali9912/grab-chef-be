@@ -87,6 +87,28 @@ export class EventController {
     }
   }
 
+  @Post(':eventId/chef/cancel')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CUSTOMER)
+  async chefCancelEvent(
+    @Param('eventId') eventId: string,
+    @Body() confirmBookingDto: CancelBookingDto,
+    @Req() req: RequestUser,
+  ) {
+    try {
+      return await this.eventService.chefCancelEvent(
+        req.user._id.toString(),
+        eventId,
+        confirmBookingDto,
+      );
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to confirm booking',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   @Get('detail/:eventId')
   @UseGuards(JwtAuthGuard)
   async getEventById(@Param('eventId') eventId: string) {

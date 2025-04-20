@@ -93,7 +93,7 @@ export class EventService {
   async customerCancelEvent(
     customerId: string,
     eventId: string,
-    confirmBookingDto: CancelBookingDto,
+    cancelBoookingDto: CancelBookingDto,
   ) {
     const event = await this.eventModel.findById(eventId).exec();
     if (!event) {
@@ -110,10 +110,38 @@ export class EventService {
 
     // Update event status
     event.status = EventStatus.CANCELLED;
-
+    event.cancelReason = cancelBoookingDto.reason;
+    
+    await event.save();
+    
+    return { message: 'Booking Cancelled', success: true };
+  }
+  
+  async chefCancelEvent(
+    userId: string,
+    eventId: string,
+    cancelBoookingDto: CancelBookingDto,
+  ) {
+    const event = await this.eventModel.findById(eventId).exec();
+    if (!event) {
+      throw new HttpException('Event not found', HttpStatus.NOT_FOUND);
+    }
+    
+    // Ensure event belongs to chef
+    if (event.chef.toString() !== userId) {
+      throw new HttpException(
+        'Event does not belong to customer',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+    
+    // Update event status
+    event.status = EventStatus.CANCELLED;
+    event.cancelReason = cancelBoookingDto.reason;
+    
     await event.save();
 
-    return { message: 'Booking Cancelled', success: true };
+    return { message: 'Booking Cancelled by chef', success: true };
   }
 
   async markAttendance(
@@ -141,9 +169,16 @@ export class EventService {
       location: attendanceDto.location,
     };
 
+    let message = 'Attendance has been marked.';
+
+    if (attendanceDto.status === 'checkout') {
+      event.status = EventStatus.COMPLETED;
+      message = 'Chef has checout successfully.';
+    }
+
     await event.save();
 
-    return { message: 'Attendance marked' };
+    return { message };
   }
 
   async getEvents(userId: string, userRole: UserRole, urlQuery: PaginationDto) {

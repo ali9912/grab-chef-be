@@ -12,6 +12,7 @@ export enum EventStatus {
 export enum AttendanceStatus {
   ATTENDED = 'attended',
   NO_SHOW = 'no-show',
+  CHECK_OUT = 'checkout',
 }
 
 export interface MenuItem {
@@ -40,6 +41,7 @@ export interface Event extends Document {
   createdAt: Date;
   updatedAt: Date;
   orderId: number;
+  cancelReason?: string;
 }
 
 export interface Counter extends Document {

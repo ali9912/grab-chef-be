@@ -100,6 +100,47 @@ export class AuthController {
     }
   }
 
+  // Replace the Phone number Addition and  verification with the below code
+
+  // @UseGuards(JwtAuthGuard)
+  // @Post('phone-number')
+  // async addPhoneNumber(
+  //   // @Param('userId') userId: string,
+  //   @Body() addPhoneNumberDto: AddPhoneNumberDTO,
+  //   @Req() req: RequestUser,
+  // ) {
+  //   try {
+  //     const userID = req.user._id.toString();
+  //     return await this.authService.addPhoneNumber(addPhoneNumberDto, userID);
+  //   } catch (error) {
+  //     throw new HttpException(
+  //       error.message || 'Registration failed',
+  //       error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+  //     );
+  //   }
+  // }
+
+  // @UseGuards(JwtAuthGuard)
+  // @Post('phone-number/verify')
+  // async verifyAndAddPhoneNumber(
+  //   // @Param('userId') userId: string,
+  //   @Body() verifyOtpDto: VerifyOtpDto,
+  //   @Req() req: RequestUser,
+  // ) {
+  //   try {
+  //     const userID = req.user._id.toString();
+  //     return await this.authService.verifyAndAddPhoneNumber(
+  //       verifyOtpDto,
+  //       userID,
+  //     );
+  //   } catch (error) {
+  //     throw new HttpException(
+  //       error.message || 'Registration failed',
+  //       error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+  //     );
+  //   }
+  // }
+
   @UseGuards(JwtAuthGuard)
   @Post('create-password')
   async createPassword(
