@@ -62,6 +62,8 @@ export class MenuService {
 
   async getCurrentChefMenus(userInfo: User) {
     const userId = userInfo._id.toString();
+    console.log('USER Info ===', userInfo);
+    console.log('USER ID ===', userId);
     const menus = await this.menuModel.find({ chef: userId });
     return { menus, success: true };
   }
