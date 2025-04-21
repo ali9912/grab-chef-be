@@ -24,7 +24,7 @@ import { RequestUser } from 'src/auth/interfaces/request-user.interface';
 
 @Controller('event')
 export class EventController {
-  constructor(private readonly eventService: EventService) { }
+  constructor(private readonly eventService: EventService) {}
 
   @Post('create')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -42,7 +42,6 @@ export class EventController {
       );
     }
   }
-
 
   @Post(':eventId/confirm')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -106,11 +105,11 @@ export class EventController {
   async markAttendance(
     @Param('eventId') eventId: string,
     @Body() attendanceDto: AttendanceDto,
-    @Request() req,
+    @Req() req: RequestUser,
   ) {
     try {
       return await this.eventService.markAttendance(
-        req.user.userId,
+        req.user._id.toString(),
         eventId,
         attendanceDto,
       );
