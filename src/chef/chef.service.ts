@@ -25,7 +25,9 @@ export class ChefService {
     const { page = 1, limit = 10 } = paginationDto;
     const skip = (page - 1) * limit;
 
-    const query = { status: ChefVerificationStatus.APPROVED };
+    const query = {
+      // status: ChefVerificationStatus.APPROVED,
+    };
 
     const [chefs, totalCount] = await Promise.all([
       this.chefModel
