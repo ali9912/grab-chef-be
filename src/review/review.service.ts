@@ -13,29 +13,42 @@ export class ReviewService {
     private readonly eventService: EventService,
   ) {}
 
-  async submitReview(customerId: string, eventId: string, reviewDto: ReviewDto) {
+  async submitReview(
+    customerId: string,
+    eventId: string,
+    reviewDto: ReviewDto,
+  ) {
     // Get event
-    const {event} = await this.eventService.getEventById(eventId);
-    
+    const { event } = await this.eventService.getEventById(eventId);
+
     // Verify event exists and belongs to customer
-    if (event.customer.toString() !== customerId) {
-      throw new HttpException('Event does not belong to customer', HttpStatus.FORBIDDEN);
+    if (event.customer._id.toString() !== customerId) {
+      throw new HttpException(
+        'Event does not belong to customer',
+        HttpStatus.FORBIDDEN,
+      );
     }
-    
+
     // Verify event is completed
     if (event.status !== EventStatus.COMPLETED) {
-      throw new HttpException('Cannot review an incomplete event', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Cannot review an incomplete event',
+        HttpStatus.BAD_REQUEST,
+      );
     }
-    
+
     // Check if review already exists
     const existingReview = await this.reviewModel
       .findOne({ event: eventId, customer: customerId })
       .exec();
-      
+
     if (existingReview) {
-      throw new HttpException('Review already submitted for this event', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Review already submitted for this event',
+        HttpStatus.BAD_REQUEST,
+      );
     }
-    
+
     // Create review
     const review = new this.reviewModel({
       event: eventId,
@@ -44,24 +57,45 @@ export class ReviewService {
       rating: reviewDto.rating,
       review: reviewDto.review,
     });
-    
+
     await review.save();
-    
+
     return { message: 'Review submitted successfully' };
   }
 
-  async getChefReviews(chefId: string) {
-    return this.reviewModel.find({ chef: chefId })
-      .populate('customer', 'firstName lastName')
+  async getReviewsByChefId(chefId: string) {
+    const reviews = await this.reviewModel
+      .find({ chef: chefId })
+      .populate('customer')
       .exec();
+    const avgRating = await this.calculateChefAverageRating(chefId);
+    return {
+      reviews,
+      avgRating,
+    };
+  }
+
+  async getChefReviews(chefId: string) {
+    const reviews = await this.reviewModel
+      .find({ chef: chefId })
+      .populate('customer')
+      .exec();
+    const avgRating = await this.calculateChefAverageRating(chefId);
+    return {
+      reviews,
+      avgRating,
+    };
   }
 
   async calculateChefAverageRating(chefId: string) {
-    const result = await this.reviewModel.aggregate([
-      { $match: { chef: chefId } },
-      { $group: { _id: null, averageRating: { $avg: '$rating' } } },
-    ]).exec();
-    
+    console.log('CHEF IF ', chefId);
+    const result = await this.reviewModel
+      .aggregate([
+        { $match: { chef: chefId } },
+        // { $group: { _id: null, averageRating: { $avg: '$rating' } } },
+      ])
+      .exec();
+
     return result.length > 0 ? result[0].averageRating : 0;
   }
 }
