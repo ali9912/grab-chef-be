@@ -34,17 +34,24 @@ export class ChefService {
         .find(query)
         .skip(skip)
         .limit(limit)
-        .populate('userId', 'firstName lastName')
+        .populate('userId')
         .exec(),
       this.chefModel.countDocuments(query).exec(),
     ]);
 
     const formattedChefs = chefs.map((chef) => ({
-      id: chef._id,
-      name: `${(chef.userId as any).firstName} ${
-        (chef.userId as any).lastName
-      }`,
-      rating: chef.rating,
+      _id: chef.userId._id,
+      user: chef.userId,
+      chef: {
+        idCard: chef.idCard,
+        certificates: chef.certificates,
+        bio: chef.bio,
+        status: chef.status,
+        rating: chef.rating,
+        experience: chef.experience,
+        locations: chef.locations,
+        busyDays: chef.busyDays,
+      },
     }));
 
     return {
