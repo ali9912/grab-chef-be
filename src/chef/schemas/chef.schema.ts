@@ -6,6 +6,14 @@ import {
 import * as mongoose from 'mongoose';
 import { ChefVerificationStatus } from '../interfaces/chef.interface';
 
+export const BusyDaysSchema = new mongoose.Schema({
+  date: {
+    type: Date,
+    required: true,
+  },
+  timeSlots: [{ type: String, required: true, unique: true }],
+});
+
 export const ChefSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -40,4 +48,5 @@ export const ChefSchema = new mongoose.Schema({
     default: 0,
   },
   locations: [LocationSchema],
+  busyDays: [BusyDaysSchema],
 });

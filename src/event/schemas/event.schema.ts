@@ -91,6 +91,12 @@ export const EventSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+
+  cancelReason: {
+    type: String,
+    required: false,
+    default: null,
+  },
 });
 
 export const Counter = mongoose.model('Counter', CounterSchema);

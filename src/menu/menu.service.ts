@@ -34,24 +34,24 @@ export class MenuService {
 
   async update(menuId: string, updateMenuDto: UpdateMenuDto, userInfo: User) {
     const userId = userInfo._id.toString();
-    const chef = await this.chefService.getChefByUserId(userId);
 
-    if (!chef) {
-      return new HttpException(
-        "Chef by this userId doen't exists",
-        HttpStatus.NOT_FOUND,
+    const menu = await this.menuModel.findById(menuId);
+
+    if (menu.chef.toString() !== userId) {
+      throw new HttpException(
+        "This menu does'nt belong to chef",
+        HttpStatus.BAD_REQUEST,
       );
     }
-    const chefId = chef._id;
 
-    const menu = await this.menuModel.findByIdAndUpdate(
-      menuId,
+    menu.updateOne(
       {
         ...updateMenuDto,
-        chef: chefId,
       },
       { new: true },
     );
+
+    await menu.save();
 
     return {
       menu,
@@ -62,15 +62,9 @@ export class MenuService {
 
   async getCurrentChefMenus(userInfo: User) {
     const userId = userInfo._id.toString();
-    const chef = await this.chefService.getChefByUserId(userId);
-    if (!chef) {
-      return new HttpException(
-        "Chef by this userId doen't exists",
-        HttpStatus.NOT_FOUND,
-      );
-    }
-    const chefId = chef._id;
-    const menus = await this.menuModel.find({ chef: chefId });
+    console.log('USER Info ===', userInfo);
+    console.log('USER ID ===', userId);
+    const menus = await this.menuModel.find({ chef: userId });
     return { menus, success: true };
   }
 
@@ -112,15 +106,8 @@ export class MenuService {
       API REQUESTS FOR CUSTOMERS ONLY 
   */
 
-  async getAllMenuByChef(chefId: string) {
-    const chef = await this.chefService.findChefById(chefId);
-    if (!chef) {
-      return new HttpException(
-        "Chef by this userId doen't exists",
-        HttpStatus.NOT_FOUND,
-      );
-    }
-    const menus = await this.menuModel.find({ chef: chefId });
+  async getAllMenuByChef(userId: string) {
+    const menus = await this.menuModel.find({ chef: userId });
     return { menus, success: true };
   }
 }

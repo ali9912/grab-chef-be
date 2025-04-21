@@ -5,7 +5,7 @@ import { Chef } from 'src/chef/interfaces/chef.interface';
 export const MenuSchema = new mongoose.Schema({
   chef: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Chef',
+    ref: 'User',
     required: true,
   },
   title: {

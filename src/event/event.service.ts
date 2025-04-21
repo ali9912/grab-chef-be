@@ -14,6 +14,7 @@ import { PaginationDto } from '../common/dto/pagination.dto';
 import { ChefService } from '../chef/chef.service';
 import { CustomerService } from '../customer/customer.service';
 import { UserRole } from '../users/interfaces/user.interface';
+import { formatDateToYYYYMMDD } from 'src/helpers/date-formatter';
 
 @Injectable()
 export class EventService {
@@ -48,7 +49,7 @@ export class EventService {
   }
 
   async confirmBooking(
-    chefId: string,
+    userId: string,
     eventId: string,
     confirmBookingDto: ConfirmBookingDto,
   ) {
@@ -58,12 +59,14 @@ export class EventService {
     }
 
     // Ensure event belongs to chef
-    if (event.chef.toString() !== chefId) {
+    if (event.chef.toString() !== userId) {
       throw new HttpException(
         'Event does not belong to chef',
         HttpStatus.FORBIDDEN,
       );
     }
+
+    const chef = await this.chefService.getChefByUserId(userId);
 
     // Update event status
     event.status =
@@ -77,13 +80,20 @@ export class EventService {
 
     await event.save();
 
+    if (confirmBookingDto.status !== 'rejected') {
+      await this.chefService.addEventToCalendar(chef, {
+        date: formatDateToYYYYMMDD(event.date),
+        timeSlots: [event.time],
+      });
+    }
+
     return { message: 'Booking status updated' };
   }
 
   async customerCancelEvent(
     customerId: string,
     eventId: string,
-    confirmBookingDto: CancelBookingDto,
+    cancelBoookingDto: CancelBookingDto,
   ) {
     const event = await this.eventModel.findById(eventId).exec();
     if (!event) {
@@ -100,10 +110,38 @@ export class EventService {
 
     // Update event status
     event.status = EventStatus.CANCELLED;
-
+    event.cancelReason = cancelBoookingDto.reason;
+    
+    await event.save();
+    
+    return { message: 'Booking Cancelled', success: true };
+  }
+  
+  async chefCancelEvent(
+    userId: string,
+    eventId: string,
+    cancelBoookingDto: CancelBookingDto,
+  ) {
+    const event = await this.eventModel.findById(eventId).exec();
+    if (!event) {
+      throw new HttpException('Event not found', HttpStatus.NOT_FOUND);
+    }
+    
+    // Ensure event belongs to chef
+    if (event.chef.toString() !== userId) {
+      throw new HttpException(
+        'Event does not belong to customer',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+    
+    // Update event status
+    event.status = EventStatus.CANCELLED;
+    event.cancelReason = cancelBoookingDto.reason;
+    
     await event.save();
 
-    return { message: 'Booking Cancelled', success: true };
+    return { message: 'Booking Cancelled by chef', success: true };
   }
 
   async markAttendance(
@@ -131,9 +169,16 @@ export class EventService {
       location: attendanceDto.location,
     };
 
+    let message = 'Attendance has been marked.';
+
+    if (attendanceDto.status === 'checkout') {
+      event.status = EventStatus.COMPLETED;
+      message = 'Chef has checout successfully.';
+    }
+
     await event.save();
 
-    return { message: 'Attendance marked' };
+    return { message };
   }
 
   async getEvents(userId: string, userRole: UserRole, urlQuery: PaginationDto) {
