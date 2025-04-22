@@ -33,18 +33,8 @@ export class MenuService {
   }
 
   async update(menuId: string, updateMenuDto: UpdateMenuDto, userInfo: User) {
-    const userId = userInfo._id.toString();
-
-    const menu = await this.menuModel.findById(menuId);
-
-    if (menu.chef.toString() !== userId) {
-      throw new HttpException(
-        "This menu does'nt belong to chef",
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    menu.updateOne(
+    const menu = await this.menuModel.findByIdAndUpdate(
+      menuId,
       {
         ...updateMenuDto,
       },
@@ -62,8 +52,6 @@ export class MenuService {
 
   async getCurrentChefMenus(userInfo: User) {
     const userId = userInfo._id.toString();
-    console.log('USER Info ===', userInfo);
-    console.log('USER ID ===', userId);
     const menus = await this.menuModel.find({ chef: userId });
     return { menus, success: true };
   }
