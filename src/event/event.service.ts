@@ -13,15 +13,20 @@ import { AttendanceDto } from './dto/attendance.dto';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { ChefService } from '../chef/chef.service';
 import { CustomerService } from '../customer/customer.service';
-import { UserRole } from '../users/interfaces/user.interface';
+import { User, UserRole } from '../users/interfaces/user.interface';
 import { formatDateToYYYYMMDD } from 'src/helpers/date-formatter';
+import { Chef } from 'src/chef/interfaces/chef.interface';
+import { AchievementsService } from 'src/achievements/achievements.service';
 
 @Injectable()
 export class EventService {
   constructor(
     @InjectModel('Event') private readonly eventModel: Model<Event>,
     @InjectModel('Counter') private readonly Counter: Model<Counter>,
+    @InjectModel('User') private readonly userModel: Model<User>,
+    @InjectModel('Chef') private readonly chefModel: Model<Chef>,
     private readonly chefService: ChefService,
+    private readonly achievementService: AchievementsService,
     private readonly customerService: CustomerService,
   ) {}
 
@@ -111,12 +116,12 @@ export class EventService {
     // Update event status
     event.status = EventStatus.CANCELLED;
     event.cancelReason = cancelBoookingDto.reason;
-    
+
     await event.save();
-    
+
     return { message: 'Booking Cancelled', success: true };
   }
-  
+
   async chefCancelEvent(
     userId: string,
     eventId: string,
@@ -126,7 +131,7 @@ export class EventService {
     if (!event) {
       throw new HttpException('Event not found', HttpStatus.NOT_FOUND);
     }
-    
+
     // Ensure event belongs to chef
     if (event.chef.toString() !== userId) {
       throw new HttpException(
@@ -134,11 +139,11 @@ export class EventService {
         HttpStatus.FORBIDDEN,
       );
     }
-    
+
     // Update event status
     event.status = EventStatus.CANCELLED;
     event.cancelReason = cancelBoookingDto.reason;
-    
+
     await event.save();
 
     return { message: 'Booking Cancelled by chef', success: true };
@@ -174,6 +179,14 @@ export class EventService {
     if (attendanceDto.status === 'checkout') {
       event.status = EventStatus.COMPLETED;
       message = 'Chef has checout successfully.';
+      const chefUser = await this.chefModel.findOne({ userId: chefId });
+      if (chefUser) {
+        const totalCompletedOrders = chefUser.completedOrders + 1;
+        chefUser.completedOrders = totalCompletedOrders;
+      }
+      await chefUser.save();
+      // check for the acheivements by the chef
+      await this.achievementService.checkForAchievements(chefId);
     }
 
     await event.save();

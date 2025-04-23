@@ -5,12 +5,16 @@ import { Review } from './interfaces/review.interface';
 import { ReviewDto } from './dto/review.dto';
 import { EventService } from '../event/event.service';
 import { EventStatus } from '../event/interfaces/event.interface';
+import { Chef } from 'src/chef/interfaces/chef.interface';
+import { AchievementsService } from 'src/achievements/achievements.service';
 
 @Injectable()
 export class ReviewService {
   constructor(
     @InjectModel('Review') private readonly reviewModel: Model<Review>,
+    @InjectModel('Chef') private readonly chefModel: Model<Chef>,
     private readonly eventService: EventService,
+    private readonly achievementService: AchievementsService,
   ) {}
 
   async submitReview(
@@ -42,11 +46,34 @@ export class ReviewService {
       .findOne({ event: eventId, customer: customerId })
       .exec();
 
-    if (existingReview) {
-      throw new HttpException(
-        'Review already submitted for this event',
-        HttpStatus.BAD_REQUEST,
-      );
+    // if (existingReview) {
+    //   throw new HttpException(
+    //     'Review already submitted for this event',
+    //     HttpStatus.BAD_REQUEST,
+    //   );
+    // }
+
+    const chefUser = await this.chefModel.findOne({
+      userId: event.chef._id.toString(),
+    });
+    if (chefUser) {
+      const noOfReviews = chefUser.noOfReviews + 1;
+      chefUser.noOfReviews = noOfReviews;
+
+      const avgRating = (chefUser.avgRating + reviewDto.rating) / noOfReviews;
+      chefUser.avgRating = avgRating;
+
+      if (reviewDto.rating >= 4 && reviewDto.rating < 5) {
+        const noOfFourStars = chefUser.noOfFourStars + 1;
+        chefUser.noOfFourStars = noOfFourStars;
+      }
+
+      if (reviewDto.rating >= 5) {
+        const noOfFiveStars = chefUser.noOfFiveStars + 1;
+        chefUser.noOfFiveStars = noOfFiveStars;
+      }
+
+      await chefUser.save();
     }
 
     // Create review
@@ -59,6 +86,10 @@ export class ReviewService {
     });
 
     await review.save();
+
+    await this.achievementService.checkForAchievements(
+      event.chef._id.toString(),
+    );
 
     return { message: 'Review submitted successfully' };
   }

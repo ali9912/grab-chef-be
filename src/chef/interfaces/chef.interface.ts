@@ -1,5 +1,6 @@
 import { Document } from 'mongoose';
 import { Types } from 'mongoose';
+import { Achievements } from 'src/achievements/interfaces/achievement.interface';
 import { LocationType } from 'src/common/interfaces/location.interface';
 
 export enum ChefVerificationStatus {
@@ -24,4 +25,14 @@ export interface Chef extends Document {
   experience?: number;
   locations?: LocationType[];
   busyDays?: BusyDaysType[];
+
+  noOfReviews: number,
+  avgRating: number,
+  completedOrders: number
+
+  noOfFiveStars?: number
+  noOfFourStars?: number
+
+  achievements?: Achievements[]
+
 }
