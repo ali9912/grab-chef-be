@@ -167,7 +167,6 @@ export class AuthService {
   }
 
   async addPhoneNumber(phoneNumberDto: AddPhoneNumberDTO, userId: string) {
-
     // Check if user exists
     const userExists = await this.usersService.findById(userId);
 
@@ -249,6 +248,17 @@ export class AuthService {
       user: updatedUser,
       token,
       success: true,
+    };
+  }
+
+  async deleteUser(userId: string) {
+    // Check if user exists
+    const user = await this.userModel.findByIdAndDelete(userId);
+    console.log('Deleted', user);
+
+    return {
+      message: 'User deleted successfully',
+      user,
     };
   }
 

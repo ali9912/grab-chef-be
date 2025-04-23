@@ -8,6 +8,7 @@ import {
   Req,
   Put,
   Param,
+  Delete,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ChefAuthDto, RegisterDto } from './dto/register.dto';
@@ -91,7 +92,10 @@ export class AuthController {
     @Req() req: RequestUser,
   ) {
     try {
-      return await this.authService.verifyAndAddPhoneNumber(verifyOtpDto, userId);
+      return await this.authService.verifyAndAddPhoneNumber(
+        verifyOtpDto,
+        userId,
+      );
     } catch (error) {
       throw new HttpException(
         error.message || 'Registration failed',
@@ -189,6 +193,19 @@ export class AuthController {
     } catch (error) {
       throw new HttpException(
         error.message || 'Login with phone failed',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('user/delete')
+  async deleteUser(@Req() request: RequestUser) {
+    try {
+      return await this.authService.deleteUser(request.user._id.toString());
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Login failed',
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
