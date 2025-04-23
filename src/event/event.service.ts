@@ -16,6 +16,7 @@ import { CustomerService } from '../customer/customer.service';
 import { User, UserRole } from '../users/interfaces/user.interface';
 import { formatDateToYYYYMMDD } from 'src/helpers/date-formatter';
 import { Chef } from 'src/chef/interfaces/chef.interface';
+import { AchievementsService } from 'src/achievements/achievements.service';
 
 @Injectable()
 export class EventService {
@@ -25,8 +26,9 @@ export class EventService {
     @InjectModel('User') private readonly userModel: Model<User>,
     @InjectModel('Chef') private readonly chefModel: Model<Chef>,
     private readonly chefService: ChefService,
+    private readonly achievementService: AchievementsService,
     private readonly customerService: CustomerService,
-  ) { }
+  ) {}
 
   async createBooking(customerId: string, bookingDto: BookingDto) {
     // Create event
@@ -165,7 +167,6 @@ export class EventService {
       );
     }
 
-
     // Update attendance status
     event.attendance = {
       status: attendanceDto.status as AttendanceStatus,
@@ -178,12 +179,14 @@ export class EventService {
     if (attendanceDto.status === 'checkout') {
       event.status = EventStatus.COMPLETED;
       message = 'Chef has checout successfully.';
-      const chefUser = await this.chefModel.findOne({ userId: chefId })
+      const chefUser = await this.chefModel.findOne({ userId: chefId });
       if (chefUser) {
-        const totalCompletedOrders = chefUser.completedOrders + 1
-        chefUser.completedOrders = totalCompletedOrders
+        const totalCompletedOrders = chefUser.completedOrders + 1;
+        chefUser.completedOrders = totalCompletedOrders;
       }
-      await chefUser.save()
+      await chefUser.save();
+      // check for the acheivements by the chef
+      await this.achievementService.checkForAchievements(chefId);
     }
 
     await event.save();

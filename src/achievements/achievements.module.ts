@@ -10,9 +10,12 @@ import { ChefSchema } from 'src/chef/schemas/chef.schema';
   imports: [
     MongooseModule.forFeature([{ name: 'User', schema: UserSchema }]),
     MongooseModule.forFeature([{ name: 'Chef', schema: ChefSchema }]),
-    MongooseModule.forFeature([{ name: 'Achievements', schema: AchievementsSchema }]),
+    MongooseModule.forFeature([
+      { name: 'Achievements', schema: AchievementsSchema },
+    ]),
   ],
   controllers: [AchievementsController],
   providers: [AchievementsService],
+  exports: [AchievementsService],
 })
-export class AchievementsModule { }
+export class AchievementsModule {}

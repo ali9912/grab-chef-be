@@ -7,6 +7,7 @@ import { ChefModule } from '../chef/chef.module';
 import { CustomerModule } from '../customer/customer.module';
 import { UserSchema } from 'src/users/schemas/user.schema';
 import { ChefSchema } from 'src/chef/schemas/chef.schema';
+import { AchievementsModule } from 'src/achievements/achievements.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { ChefSchema } from 'src/chef/schemas/chef.schema';
     MongooseModule.forFeature([{ name: 'Chef', schema: ChefSchema }]),
     ChefModule,
     CustomerModule,
+    AchievementsModule,
   ],
   controllers: [EventController],
   providers: [EventService],
