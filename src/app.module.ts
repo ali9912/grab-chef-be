@@ -11,6 +11,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MenuModule } from './menu/menu.module';
+import { AchievementsModule } from './achievements/achievements.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { MenuModule } from './menu/menu.module';
     EventModule,
     ReviewModule,
     MenuModule,
+    AchievementsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

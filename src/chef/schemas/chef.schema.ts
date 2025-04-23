@@ -5,6 +5,7 @@ import {
 } from 'src/common/interfaces/location.interface';
 import * as mongoose from 'mongoose';
 import { ChefVerificationStatus } from '../interfaces/chef.interface';
+import { AchievementsSchema } from 'src/achievements/schema/achievements.schema.';
 
 export const BusyDaysSchema = new mongoose.Schema({
   date: {
@@ -49,4 +50,31 @@ export const ChefSchema = new mongoose.Schema({
   },
   locations: [LocationSchema],
   busyDays: [BusyDaysSchema],
+
+  noOfReviews: {
+    type: Number,
+    default: 0
+  },
+
+  noOfFiveStars: {
+    type: Number,
+    default: 0
+  },
+
+  noOfFourStars: {
+    type: Number,
+    default: 0
+  },
+
+  avgRating: {
+    type: Number,
+    default: 0
+  },
+
+  completedOrders: {
+    type: Number,
+    default: 0
+  },
+
+  achievements: [AchievementsSchema],
 });
