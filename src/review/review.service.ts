@@ -102,7 +102,7 @@ export class ReviewService {
     const avgRating = await this.calculateChefAverageRating(chefId);
     return {
       reviews,
-      avgRating,
+      avgRating
     };
   }
 
@@ -119,14 +119,8 @@ export class ReviewService {
   }
 
   async calculateChefAverageRating(chefId: string) {
-    console.log('CHEF IF ', chefId);
-    const result = await this.reviewModel
-      .aggregate([
-        { $match: { chef: chefId } },
-        // { $group: { _id: null, averageRating: { $avg: '$rating' } } },
-      ])
-      .exec();
+    const result = await this.chefModel.findOne({userId:chefId})
 
-    return result.length > 0 ? result[0].averageRating : 0;
+    return result?.avgRating || 0;
   }
 }
