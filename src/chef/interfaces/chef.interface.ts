@@ -14,6 +14,11 @@ export type BusyDaysType = {
   timeSlots: string[];
 };
 
+export type EmergencyType = {
+  description: string;
+  phoneNumber: string;
+};
+
 export interface Chef extends Document {
   userId: Types.ObjectId;
   idCard?: string;
@@ -26,13 +31,15 @@ export interface Chef extends Document {
   locations?: LocationType[];
   busyDays?: BusyDaysType[];
 
-  noOfReviews: number,
-  avgRating: number,
-  completedOrders: number
+  noOfReviews: number;
+  avgRating: number;
+  completedOrders: number;
 
-  noOfFiveStars?: number
-  noOfFourStars?: number
+  noOfFiveStars?: number;
+  noOfFourStars?: number;
 
-  achievements?: Achievements[]
+  achievements?: Achievements[];
 
+  hasAddeddEmergencyContact?: boolean;
+  emergencyContact: EmergencyType[];
 }

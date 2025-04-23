@@ -12,7 +12,18 @@ export const BusyDaysSchema = new mongoose.Schema({
     type: Date,
     required: true,
   },
-  timeSlots: [{ type: String, required: true, unique: true }],
+  timeSlots: [{ type: String, required: true }],
+});
+
+export const EmergencySchema = new mongoose.Schema({
+  description: {
+    type: String,
+    required: true,
+  },
+  phoneNumber: {
+    type: String,
+    required: true,
+  },
 });
 
 export const ChefSchema = new mongoose.Schema({
@@ -53,28 +64,32 @@ export const ChefSchema = new mongoose.Schema({
 
   noOfReviews: {
     type: Number,
-    default: 0
+    default: 0,
   },
 
   noOfFiveStars: {
     type: Number,
-    default: 0
+    default: 0,
   },
 
   noOfFourStars: {
     type: Number,
-    default: 0
+    default: 0,
   },
 
   avgRating: {
     type: Number,
-    default: 0
+    default: 0,
   },
 
   completedOrders: {
     type: Number,
-    default: 0
+    default: 0,
   },
 
   achievements: [AchievementsSchema],
+
+  emergencyContact: [EmergencySchema],
+
+  hasAddeddEmergencyContact: { type: Boolean, default: false },
 });

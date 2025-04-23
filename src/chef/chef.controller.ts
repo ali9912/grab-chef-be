@@ -19,6 +19,7 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { UserRole } from 'src/users/interfaces/user.interface';
 import { BusyDataDto } from './dto/busy-data-dto';
+import { CreateEmergencyDto } from './dto/-emergency.dto';
 
 @Controller('chef')
 export class ChefController {
@@ -77,6 +78,55 @@ export class ChefController {
         busyDataDto,
         _id.toString(),
       );
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to get chefs',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post('emergency')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CHEF)
+  async addChefEmergencyContact(
+    @Body() createEmergencyaDto: CreateEmergencyDto,
+    @Req() req: RequestUser,
+  ) {
+    try {
+      const { _id } = req.user;
+      return await this.chefService.addChefEmergencyContact(
+        createEmergencyaDto,
+        _id.toString(),
+      );
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to get chefs',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('emergency')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CHEF)
+  async getCurrentChefEmergencyContact(@Req() req: RequestUser) {
+    try {
+      const { _id } = req.user;
+      return await this.chefService.getChefEmergencyContacts(_id.toString());
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to get chefs',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get(':userId/emergency')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  async getChefEmergencyContact(@Param('userId') userId: string) {
+    try {
+      return await this.chefService.getChefEmergencyContacts(userId);
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to get chefs',

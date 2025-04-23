@@ -8,6 +8,7 @@ import { Chef, ChefVerificationStatus } from './interfaces/chef.interface';
 import { MenuItem } from 'src/menu/interfaces/menu.interfaces';
 import { extractChefInfo } from 'src/helpers/extract-data';
 import { BusyDataDto } from './dto/busy-data-dto';
+import { CreateEmergencyDto } from './dto/-emergency.dto';
 
 @Injectable()
 export class ChefService {
@@ -110,7 +111,6 @@ export class ChefService {
   }
 
   async addEventToChefCalendar(busyDataDto: BusyDataDto, userId: string) {
-    console.log('USERID------', userId);
     const chef = await this.chefModel.findOne({ userId });
     if (!chef) {
       throw new HttpException(
@@ -125,6 +125,50 @@ export class ChefService {
       busyDays,
       success: true,
       message: "Chef's schedule updated successfully.",
+    };
+  }
+
+  async addChefEmergencyContact(
+    createEmergencyDto: CreateEmergencyDto,
+    userId: string,
+  ) {
+    const chef = await this.chefModel.findOne({ userId });
+    if (!chef) {
+      throw new HttpException(
+        'Chef with the given user id not exists',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    const contacts = await chef.updateOne(
+      {
+        hasAddeddEmergencyContact: true,
+        $addToSet: {
+          emergencyContact: { $each: [createEmergencyDto] }, // Add unique items to the achievements array
+        },
+      },
+      { new: true },
+    );
+
+    return {
+      success: true,
+      contacts,
+      message: "Chef's emergency contact updated successfully.",
+    };
+  }
+
+  async getChefEmergencyContacts(userId: string) {
+    const chef = await this.chefModel.findOne({ userId });
+    if (!chef) {
+      throw new HttpException(
+        'Chef with the given user id not exists',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    return {
+      success: true,
+      contacts: chef.emergencyContact,
     };
   }
 
