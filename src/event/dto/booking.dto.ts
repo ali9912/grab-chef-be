@@ -10,7 +10,7 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
-import { LocationDto } from 'src/common/interfaces/location.interface';
+import { LocationDto } from 'src/common/dto/location.dto';
 
 class MenuItemDto {
   @IsMongoId()

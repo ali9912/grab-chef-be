@@ -1,6 +1,6 @@
 import * as mongoose from 'mongoose';
 import { EventStatus, AttendanceStatus } from '../interfaces/event.interface';
-import { LocationSchema } from 'src/common/interfaces/location.interface';
+import { LocationSchema } from 'src/common/schemas/location.schema';
 
 export const CounterSchema = new mongoose.Schema({
   name: { type: String, required: true, unique: true },

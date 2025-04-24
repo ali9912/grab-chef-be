@@ -1,6 +1,7 @@
-import { Customer } from 'aws-sdk/clients/connect';
+
 import { Document, Types } from 'mongoose';
 import { Chef } from 'src/chef/interfaces/chef.interface';
+import { Customer } from 'src/customer/interface/customer.interface';
 
 export enum UserRole {
   ADMIN = 'admin',
