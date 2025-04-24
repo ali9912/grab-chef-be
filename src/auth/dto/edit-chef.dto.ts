@@ -9,9 +9,9 @@ import {
   IsArray,
   ValidateNested,
 } from 'class-validator';
+import { LocationDto } from 'src/common/dto/location.dto';
 import {
   LocationType,
-  LocationDto,
 } from 'src/common/interfaces/location.interface';
 import { UserRole } from 'src/users/interfaces/user.interface';
 

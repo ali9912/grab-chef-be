@@ -15,6 +15,7 @@ export type BusyDaysType = {
 };
 
 export interface Chef extends Document {
+  _id: string;
   userId: Types.ObjectId;
   idCard?: string;
   certificates?: string;

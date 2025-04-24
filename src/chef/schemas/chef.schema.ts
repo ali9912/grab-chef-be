@@ -1,11 +1,7 @@
-import {
-  LocationSchema,
-  LocationType,
-  LocationDto,
-} from 'src/common/interfaces/location.interface';
 import * as mongoose from 'mongoose';
-import { ChefVerificationStatus } from '../interfaces/chef.interface';
 import { AchievementsSchema } from 'src/achievements/schema/achievements.schema.';
+import { ChefVerificationStatus } from '../interfaces/chef.interface';
+import { LocationSchema } from 'src/common/schemas/location.schema';
 
 export const BusyDaysSchema = new mongoose.Schema({
   date: {
