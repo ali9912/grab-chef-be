@@ -5,10 +5,14 @@ import { User, UserRole } from './interfaces/user.interface';
 import { RegisterDto } from '../auth/dto/register.dto';
 import { RegisterCustomerDto } from 'src/auth/dto/register-customer.dto';
 import { encryptPassword } from 'src/helpers/password-helper';
+import { Customer } from 'src/customer/interface/customer.interface';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel('User') private readonly userModel: Model<User>) {}
+  constructor(
+    @InjectModel('User') private readonly userModel: Model<User>,
+    @InjectModel('Customer') private readonly customerModel: Model<Customer>,
+  ) {}
 
   async create(registerDto: RegisterDto): Promise<User> {
     const newUser = new this.userModel({
@@ -29,6 +33,15 @@ export class UsersService {
       isVerified: false,
       createdAt: new Date(),
     });
+
+    const newCustomer = await this.customerModel.create({
+      userId: newUser._id,
+    });
+
+    await newCustomer.save();
+
+    await newUser.updateOne({ customer: newCustomer._id, locations: [] });
+
     return await newUser.save();
   }
 
