@@ -41,7 +41,7 @@ export class ChefService {
     ]);
 
     const formattedChefs = chefs.map((chef) => ({
-      _id: chef.userId._id,
+      _id: chef.userId?._id,
       user: chef.userId,
       chef: {
         idCard: chef.idCard,
