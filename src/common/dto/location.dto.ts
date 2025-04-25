@@ -1,4 +1,11 @@
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsArray,
+  IsNumber,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 
 export class LocationDto {
   @IsString()
@@ -11,16 +18,11 @@ export class LocationDto {
   @IsString()
   @IsOptional()
   address: string;
-  
+
   @IsString()
   @IsOptional()
   key: string;
 
-  @IsNumber()
   @IsOptional()
-  latitude: number;
-
-  @IsNumber()
-  @IsOptional()
-  longitude: number;
+  location: { coordinates: [number] };
 }

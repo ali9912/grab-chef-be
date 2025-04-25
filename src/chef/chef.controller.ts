@@ -10,25 +10,24 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { PaginationDto } from '../common/dto/pagination.dto';
-import { ChefService } from './chef.service';
-import { AuthGuard } from '@nestjs/passport';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { RequestUser } from 'src/auth/interfaces/request-user.interface';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { RequestUser } from 'src/auth/interfaces/request-user.interface';
 import { UserRole } from 'src/users/interfaces/user.interface';
-import { BusyDataDto } from './dto/busy-data-dto';
+import { GetChefQueryType } from '../common/dto/pagination.dto';
+import { ChefService } from './chef.service';
 import { CreateEmergencyDto } from './dto/-emergency.dto';
+import { BusyDataDto } from './dto/busy-data-dto';
 
 @Controller('chef')
 export class ChefController {
   constructor(private readonly chefService: ChefService) {}
 
   @Get('list')
-  async getAllChefs(@Query() paginationDto: PaginationDto) {
+  async getAllChefs(@Query() getChefQuery: GetChefQueryType) {
     try {
-      return await this.chefService.getAllChefs(paginationDto);
+      return await this.chefService.getAllChefs(getChefQuery);
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to get chefs',

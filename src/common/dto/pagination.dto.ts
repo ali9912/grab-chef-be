@@ -1,15 +1,17 @@
-import { IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { EventStatus } from 'src/event/interfaces/event.interface';
+import { LocationType } from '../interfaces/location.interface';
+import { LocationDto } from './location.dto';
 
-export class GetChefEventsQueryType {
-  @IsString()
-  @IsOptional()
-  @IsEnum(EventStatus)
-  status?: string
-}
-
-export class PaginationDto extends GetChefEventsQueryType{
+export class PaginationDto {
   @IsInt()
   @Min(1)
   @IsOptional()
@@ -21,9 +23,31 @@ export class PaginationDto extends GetChefEventsQueryType{
   @IsOptional()
   @Type(() => Number)
   limit?: number;
-
-  @IsString()
-  @IsOptional()
-  @IsEnum(EventStatus)
-  status?: string;
 }
+
+// export class GetChefQueryType extends PaginationDto {
+//   @IsString()
+//   @IsOptional()
+//   @IsEnum(EventStatus)
+//   status: string;
+
+//   @IsString()
+//   @IsOptional()
+//   search: string;
+
+//   @IsString()
+//   @IsOptional()
+//   location: {
+//     latitude: number;
+//     longitude: number;
+//   };
+// }
+
+export type GetChefQueryType = {
+  search?: string;
+  status?: EventStatus;
+  latitude?: number;
+  longitude?: number;
+  page?: number;
+  limit?: number;
+};

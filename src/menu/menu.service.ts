@@ -7,6 +7,7 @@ import { User } from 'src/users/interfaces/user.interface';
 import { CreateMenuDto } from './dto/create-menu.dto';
 import { UpdateMenuDto } from './dto/update-menu.dto';
 import { MenuItem } from './interfaces/menu.interfaces';
+import { RandomMenuDto } from './dto/random-menu.dto';
 
 @Injectable()
 export class MenuService {
@@ -76,7 +77,6 @@ export class MenuService {
       const res = await this.menuModel
         .findByIdAndDelete(id, { new: true })
         .exec();
-      console.log({ res });
       return { success: true, message: 'Memu deleted successfully' };
     } catch (error) {
       if (error.name === 'CastError') {
@@ -96,6 +96,52 @@ export class MenuService {
 
   async getAllMenuByChef(userId: string) {
     const menus = await this.menuModel.find({ chef: userId });
+    return { menus, success: true };
+  }
+
+  async getRandomMenu(queryData: RandomMenuDto) {
+    const menus = await this.menuModel.aggregate([
+      {
+        $lookup: {
+          from: 'chefs',
+          localField: 'chef', // Menu.chef (ObjectId of User)
+          foreignField: 'userId', // Chef.userId (also ObjectId of User)
+          as: 'chefDetails',
+        },
+      },
+      { $unwind: '$chefDetails' },
+
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'chefDetails.userId', // Now get actual user info
+          foreignField: '_id',
+          as: 'chefUserDetails',
+        },
+      },
+      { $unwind: '$chefUserDetails' },
+
+      {
+        $sort: { 'chefDetails.avgRating': -1 },
+      },
+      {
+        $project: {
+          _id: 0,
+          title: 1,
+          description: 1,
+          price: 1,
+          images: 1,
+
+          'chefDetails.avgRating': 1,
+
+          // User details
+          'chefUserDetails.firstName': 1,
+          'chefUserDetails.lastName': 1,
+          'chefUserDetails.profilePicture': 1,
+        },
+      },
+    ]);
+
     return { menus, success: true };
   }
 }

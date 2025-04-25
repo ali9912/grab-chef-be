@@ -11,6 +11,7 @@ import { OtpSchema } from './schemas/otp.schema';
 import { UtilsModule } from '../utils/utils.module';
 import { ChefModule } from 'src/chef/chef.module';
 import { UserSchema } from 'src/users/schemas/user.schema';
+import { ChefSchema } from 'src/chef/schemas/chef.schema';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { UserSchema } from 'src/users/schemas/user.schema';
     }),
     MongooseModule.forFeature([{ name: 'Otp', schema: OtpSchema }]),
     MongooseModule.forFeature([{ name: 'User', schema: UserSchema }]),
+    MongooseModule.forFeature([{ name: 'Chef', schema: ChefSchema }]),
     UsersModule,
     ChefModule,
     UtilsModule,

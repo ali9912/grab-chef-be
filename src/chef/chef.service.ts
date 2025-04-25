@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { PaginationDto } from '../common/dto/pagination.dto';
+import { GetChefQueryType, PaginationDto } from '../common/dto/pagination.dto';
 import { UsersService } from '../users/users.service';
 import { AwsS3Service } from '../utils/aws-s3.service';
 import { Chef, ChefVerificationStatus } from './interfaces/chef.interface';
@@ -22,41 +22,120 @@ export class ChefService {
   async getChefByUserId(userId: string) {
     return await this.chefModel.findOne({ userId });
   }
-  async getAllChefs(paginationDto: PaginationDto) {
-    const { page = 1, limit = 10 } = paginationDto;
-    const skip = (page - 1) * limit;
+  async getAllChefs(query: GetChefQueryType) {
+    const { page = 1, limit = 10, search, status, latitude, longitude } = query;
+    const skip = (page - 1) * Number(limit);
 
-    const query = {
-      // status: ChefVerificationStatus.APPROVED,
-    };
+    // Initialize the aggregation pipeline
+    const pipeline: any[] = [];
 
-    const [chefs, totalCount] = await Promise.all([
-      this.chefModel
-        .find(query)
-        .skip(skip)
-        .limit(limit)
-        .populate('userId')
-        .exec(),
-      this.chefModel.countDocuments(query).exec(),
-    ]);
+    // Step 1: Handle geoNear if location is provided
+    if (latitude != null && longitude != null) {
+      // First stage: $geoNear with corrected coordinates array
+      pipeline.push({
+        $geoNear: {
+          near: {
+            type: 'Point', // Explicitly setting type as 'Point'
+            coordinates: [
+              parseFloat(`${longitude}`),
+              parseFloat(`${latitude}`),
+            ], // Ensure coordinates are numbers
+          },
+          distanceField: 'distance', // Add distance in the result
+          spherical: true,
+          query: status ? { status } : {}, // Apply status filter if present
+        },
+      });
 
-    const formattedChefs = chefs.map((chef) => ({
-      _id: chef.userId._id,
-      user: chef.userId,
-      chef: {
-        idCard: chef.idCard,
-        certificates: chef.certificates,
-        bio: chef.bio,
-        status: chef.status,
-        rating: chef.rating,
-        experience: chef.experience,
-        locations: chef.locations,
-        busyDays: chef.busyDays,
+      // Step 2: Unwind locations after geoNear to process each location's coordinates
+      pipeline.push({ $unwind: '$locations' }); // Unwind the locations array
+
+      // Step 3: Match only those locations with coordinates (i.e., location is not empty)
+      pipeline.push({
+        $match: {
+          'locations.location.coordinates': { $exists: true, $ne: [] }, // Ensure coordinates exist
+        },
+      });
+    } else {
+      // No geoNear filter → apply status filter up-front if given
+      if (status) {
+        pipeline.push({ $match: { status } });
+      }
+    }
+
+    // Step 4: Lookup the User document to get firstName, lastName, and profilePicture
+    pipeline.push(
+      {
+        $lookup: {
+          from: 'users', // actual collection name
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'user',
+        },
       },
-    }));
+      { $unwind: '$user' }, // Unwind the 'user' array after lookup
+    );
+
+    // Step 5: If search is present, filter by first or last name (case-insensitive)
+    if (search) {
+      const regex = new RegExp(search, 'i');
+      pipeline.push({
+        $match: {
+          $or: [
+            { 'user.firstName': { $regex: regex } },
+            { 'user.lastName': { $regex: regex } },
+          ],
+        },
+      });
+    }
+
+    // Step 6: If we didn’t do a geoNear, sort by avgRating
+    if (!latitude || !longitude) {
+      pipeline.push({ $sort: { avgRating: -1 } });
+    }
+
+    // Step 7: Apply pagination and projection
+    pipeline.push({
+      $facet: {
+        metadata: [
+          { $count: 'total' }, // totalCount after filters
+        ],
+        data: [
+          { $skip: skip },
+          { $limit: Number(limit) },
+          {
+            $project: {
+              _id: 0,
+              chefId: '$user._id',
+              distance: 1, // Only if geoNear ran
+              'user._id': 1,
+              'user.firstName': 1,
+              'user.lastName': 1,
+              'user.profilePicture': 1,
+              idCard: 1,
+              certificates: 1,
+              bio: 1,
+              status: 1,
+              avgRating: 1,
+              experience: 1,
+              locations: 1,
+              busyDays: 1,
+              achievements: 1, // Include achievements if needed
+              emergencyContact: 1, // Include emergency contact if needed
+              hasAddeddEmergencyContact: 1, // Add if required
+            },
+          },
+        ],
+      },
+    });
+
+    // Step 8: Execute the aggregation pipeline
+    const [result] = await this.chefModel.aggregate(pipeline);
+
+    const totalCount = result.metadata.length ? result.metadata[0].total : 0;
 
     return {
-      chefs: formattedChefs,
+      chefs: result.data,
       totalCount,
       page,
       limit,

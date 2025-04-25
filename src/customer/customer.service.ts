@@ -27,10 +27,7 @@ export class CustomerService {
     }, { new: true })
 
     if (!customer) {
-      console.log("CREATING NEW CUSTOMER AGAINST USER ID")
       const newCustomer = await this.customerModel.create({ userId, locations: [locationDto] })
-      console.log("newCustomer", newCustomer)
-
       return { message: "Customer created and location added", locations: newCustomer.locations }
     }
 
@@ -42,7 +39,6 @@ export class CustomerService {
 
     // Find the customer
     const customer = await this.customerModel.findOne({ userId });
-    console.log(customer)
 
     if (!customer) {
       throw new HttpException('Customer not found', HttpStatus.NOT_FOUND);
