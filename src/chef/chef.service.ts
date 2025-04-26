@@ -165,6 +165,11 @@ export class ChefService {
     });
   }
 
+  async findAndDeleteByUserId(userId: string, data: any = {}) {
+    await this.chefModel.findOneAndDelete({ userId });
+    return true
+  }
+
   async getChefBusySchedule(userId: string) {
     const chef = await this.chefModel.findOne({ userId });
     if (!chef) {

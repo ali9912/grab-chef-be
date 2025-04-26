@@ -258,4 +258,14 @@ export class EventService {
 
     return { event, success: true };
   }
+
+  async deleteEventsByChefId(chefId: string) {
+    await this.eventModel.deleteMany({ chef: chefId });
+    return true;
+  }
+
+  async deleteEventsByCustomerId(customerId: string) {
+    await this.eventModel.deleteMany({ customer: customerId });
+    return true;
+  }
 }

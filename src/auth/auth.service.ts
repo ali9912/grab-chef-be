@@ -18,15 +18,21 @@ import { ChefService } from 'src/chef/chef.service';
 import { RegisterCustomerDto } from './dto/register-customer.dto';
 import { AddPhoneNumberDTO } from './dto/add-phonenumber-dto.dto';
 import { Chef } from 'src/chef/interfaces/chef.interface';
+import { MenuService } from 'src/menu/menu.service';
+import { EventService } from 'src/event/event.service';
+import { CustomerService } from 'src/customer/customer.service';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
+    private readonly usersService: UsersService,
+    private readonly menuService: MenuService,
     private readonly configService: ConfigService,
     private readonly twilioService: TwilioService,
+    private readonly eventService: EventService,
     private readonly chefService: ChefService,
+    private readonly customerService: CustomerService,
     @InjectModel('Otp') private readonly otpModel: Model<Otp>,
     @InjectModel('User') private readonly userModel: Model<User>,
     @InjectModel('Chef') private readonly chefModel: Model<Chef>,
@@ -118,52 +124,52 @@ export class AuthService {
 
   async editChefProfile(body: EditChefDto, userInfo: User) {
     const userId = userInfo?._id?.toString();
-  
+
     // Check if user exists
     const userExists = await this.usersService.findById(userId);
     if (!userExists) {
       throw new HttpException('User does not exist', HttpStatus.BAD_REQUEST);
     }
-  
+
     // Update User
     let newUser = await this.usersService.findAndUpdateById(userId, body);
-  
+
     // Update Chef Profile
     const chef = await this.chefService.findAndUpdateChefByUserId(userId, body);
-  
+
     // Handle the locations in the chef's profile
     if (body.locations) {
       // If locations are provided, either update existing or add new
       await this.chefModel.findByIdAndUpdate(
         chef._id,
         {
-          $addToSet: {  // Add new locations if they don't already exist
+          $addToSet: {
+            // Add new locations if they don't already exist
             locations: {
-              $each: body.locations,  // Ensure the new locations are added in the array
+              $each: body.locations, // Ensure the new locations are added in the array
             },
           },
         },
-        { new: true }
+        { new: true },
       );
     }
-  
+
     newUser = await this.userModel
       .findByIdAndUpdate(
         userId,
         {
           chef: chef?._id,
         },
-        { new: true }
+        { new: true },
       )
       .populate('chef');
-  
+
     return {
       success: true,
       message: 'Chef profile updated successfully',
       user: newUser,
     };
   }
-  
 
   async registerCustomer(registerDto: RegisterCustomerDto) {
     // Check if user exists
@@ -272,7 +278,16 @@ export class AuthService {
 
   async deleteUser(userId: string) {
     // Check if user exists
-    const user = await this.userModel.findByIdAndDelete(userId);
+    const user = await this.userModel.findById(userId);
+    if (user.role === UserRole.CHEF) {
+      await this.chefService.findAndDeleteByUserId(userId);
+      await this.menuService.deleteByChefId(userId);
+      await this.eventService.deleteEventsByChefId(userId);
+    } else {
+      await this.eventService.deleteEventsByCustomerId(userId);
+      await this.customerService.findAndDeleteByUserId(userId);
+    }
+    console.log('Deleted', user);
 
     return {
       message: 'User deleted successfully',

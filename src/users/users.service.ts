@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { User, UserRole } from './interfaces/user.interface';
@@ -54,6 +54,19 @@ export class UsersService {
   }
 
   async findAndUpdateById(_id: string, object: any): Promise<User> {
+    if (object?.email) {
+      const checkIfEmailExists = await this.userModel.find({
+        email: object?.email,
+      });
+      if (checkIfEmailExists.length) {
+        if (checkIfEmailExists[0]._id.toString() !== _id) {
+          throw new HttpException(
+            'User with this email already exists',
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+      }
+    }
     const isUser = await this.userModel
       .findByIdAndUpdate(_id, { ...object }, { new: true })
       .exec();

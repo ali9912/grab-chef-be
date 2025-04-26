@@ -30,5 +30,6 @@ import { UserSchema } from 'src/users/schemas/user.schema';
     ChefModule,
   ],
   providers: [MenuService],
+  exports: [MenuService],
 })
 export class MenuModule {}
