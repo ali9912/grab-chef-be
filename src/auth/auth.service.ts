@@ -17,15 +17,21 @@ import { EditChefDto } from './dto/edit-chef.dto';
 import { ChefService } from 'src/chef/chef.service';
 import { RegisterCustomerDto } from './dto/register-customer.dto';
 import { AddPhoneNumberDTO } from './dto/add-phonenumber-dto.dto';
+import { MenuService } from 'src/menu/menu.service';
+import { EventService } from 'src/event/event.service';
+import { CustomerService } from 'src/customer/customer.service';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
+    private readonly usersService: UsersService,
+    private readonly menuService: MenuService,
     private readonly configService: ConfigService,
     private readonly twilioService: TwilioService,
+    private readonly eventService: EventService,
     private readonly chefService: ChefService,
+    private readonly customerService: CustomerService,
     @InjectModel('Otp') private readonly otpModel: Model<Otp>,
     @InjectModel('User') private readonly userModel: Model<User>,
   ) {}
@@ -253,7 +259,15 @@ export class AuthService {
 
   async deleteUser(userId: string) {
     // Check if user exists
-    const user = await this.userModel.findByIdAndDelete(userId);
+    const user = await this.userModel.findById(userId);
+    if (user.role === UserRole.CHEF) {
+      await this.chefService.findAndDeleteByUserId(userId);
+      await this.menuService.deleteByChefId(userId);
+      await this.eventService.deleteEventsByChefId(userId);
+    } else {
+      await this.eventService.deleteEventsByCustomerId(userId);
+      await this.customerService.findAndDeleteByUserId(userId);
+    }
     console.log('Deleted', user);
 
     return {

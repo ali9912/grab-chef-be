@@ -11,30 +11,40 @@ export class CustomerService {
   constructor(
     @InjectModel('User') private readonly userModel: Model<User>,
     @InjectModel('Customer') private readonly customerModel: Model<Customer>,
-    private readonly usersService: UsersService
-  ) { }
+    private readonly usersService: UsersService,
+  ) {}
 
   async getMySavedLocations(userId: string) {
-    const customer = await this.customerModel.findOne({ userId })
-    return { locations: customer.locations }
+    const customer = await this.customerModel.findOne({ userId });
+    return { locations: customer.locations };
   }
 
   async addCustomerLocation(userId: string, locationDto: LocationDto) {
-    const customer = await this.customerModel.findOneAndUpdate({ userId }, {
-      $addToSet: {
-        locations: { $each: [locationDto] }
-      }
-    }, { new: true })
+    const customer = await this.customerModel.findOneAndUpdate(
+      { userId },
+      {
+        $addToSet: {
+          locations: { $each: [locationDto] },
+        },
+      },
+      { new: true },
+    );
 
     if (!customer) {
-      console.log("CREATING NEW CUSTOMER AGAINST USER ID")
-      const newCustomer = await this.customerModel.create({ userId, locations: [locationDto] })
-      console.log("newCustomer", newCustomer)
+      console.log('CREATING NEW CUSTOMER AGAINST USER ID');
+      const newCustomer = await this.customerModel.create({
+        userId,
+        locations: [locationDto],
+      });
+      console.log('newCustomer', newCustomer);
 
-      return { message: "Customer created and location added", locations: newCustomer.locations }
+      return {
+        message: 'Customer created and location added',
+        locations: newCustomer.locations,
+      };
     }
 
-    return { message: "Location added!", locations: customer.locations }
+    return { message: 'Location added!', locations: customer.locations };
   }
 
   async editCustomerLocation(userId: string, locationDto: LocationDto) {
@@ -42,7 +52,7 @@ export class CustomerService {
 
     // Find the customer
     const customer = await this.customerModel.findOne({ userId });
-    console.log(customer)
+    console.log(customer);
 
     if (!customer) {
       throw new HttpException('Customer not found', HttpStatus.NOT_FOUND);
@@ -50,7 +60,7 @@ export class CustomerService {
 
     // Find the location to update
     const locationIndex = customer.locations.findIndex(
-      (location: any) => location._id.toString() === locationId
+      (location: any) => location._id.toString() === locationId,
     );
 
     if (locationIndex === -1) {
@@ -58,12 +68,15 @@ export class CustomerService {
     }
 
     // Update the specific location
-    customer.locations[locationIndex] = { ...customer.locations[locationIndex], ...updatedLocation };
+    customer.locations[locationIndex] = {
+      ...customer.locations[locationIndex],
+      ...updatedLocation,
+    };
 
     // Save the updated customer document
     await customer.save();
 
-    return { message: "Location updated!", locations: customer.locations };
+    return { message: 'Location updated!', locations: customer.locations };
   }
 
   async removeCustomerLocation(userId: string, locationId: string) {
@@ -78,14 +91,18 @@ export class CustomerService {
           locations: { _id: objectId }, // Remove the location with the matching ObjectId
         },
       },
-      { new: true } // Return the updated document
+      { new: true }, // Return the updated document
     );
 
     if (!customer) {
       throw new HttpException('Customer not found', HttpStatus.NOT_FOUND);
     }
 
-    return { message: "Location removed!", locations: customer.locations };
+    return { message: 'Location removed!', locations: customer.locations };
   }
 
+  async findAndDeleteByUserId(userId: string, data: any = {}) {
+    await this.customerModel.findOneAndDelete({ userId });
+    return true;
+  }
 }

@@ -90,6 +90,26 @@ export class MenuService {
     }
   }
 
+  async deleteByChefId(userId: string) {
+    try {
+      const result = await this.menuModel.deleteMany({ chef: userId }).exec();
+
+      if (result.deletedCount === 0) {
+        throw new HttpException(
+          'No menus found for the given chef',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      return { success: true, message: 'Menus deleted successfully' };
+    } catch (error) {
+      throw new HttpException(
+        'An error occurred while deleting menus',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   /* 
       API REQUESTS FOR CUSTOMERS ONLY 
   */

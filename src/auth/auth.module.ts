@@ -11,6 +11,9 @@ import { OtpSchema } from './schemas/otp.schema';
 import { UtilsModule } from '../utils/utils.module';
 import { ChefModule } from 'src/chef/chef.module';
 import { UserSchema } from 'src/users/schemas/user.schema';
+import { EventModule } from 'src/event/event.module';
+import { CustomerModule } from 'src/customer/customer.module';
+import { MenuModule } from 'src/menu/menu.module';
 
 @Module({
   imports: [
@@ -28,7 +31,10 @@ import { UserSchema } from 'src/users/schemas/user.schema';
     MongooseModule.forFeature([{ name: 'Otp', schema: OtpSchema }]),
     MongooseModule.forFeature([{ name: 'User', schema: UserSchema }]),
     UsersModule,
+    MenuModule,
     ChefModule,
+    EventModule,
+    CustomerModule,
     UtilsModule,
   ],
   controllers: [AuthController],
