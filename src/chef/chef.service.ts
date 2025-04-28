@@ -50,6 +50,7 @@ export class ChefService {
       // Step 2: Unwind locations after geoNear to process each location's coordinates
       pipeline.push({ $unwind: '$locations' }); // Unwind the locations array
 
+// <<<<<<< events
       // Step 3: Match only those locations with coordinates (i.e., location is not empty)
       pipeline.push({
         $match: {
@@ -72,7 +73,7 @@ export class ChefService {
           foreignField: '_id',
           as: 'user',
         },
-      },
+      }      
       { $unwind: '$user' }, // Unwind the 'user' array after lookup
     );
 
@@ -93,6 +94,32 @@ export class ChefService {
     if (!latitude || !longitude) {
       pipeline.push({ $sort: { avgRating: -1 } });
     }
+
+
+// =======
+//     const [chefs, totalCount] = await Promise.all([
+//       this.chefModel
+//         .find(query)
+//         .skip(skip)
+//         .limit(limit)
+//         .populate('userId')
+//         .exec(),
+//       this.chefModel.countDocuments(query).exec(),
+//     ]);
+
+//     const formattedChefs = chefs.map((chef) => ({
+//       _id: chef.userId?._id,
+//       user: chef.userId,
+//       chef: {
+//         idCard: chef.idCard,
+//         certificates: chef.certificates,
+//         bio: chef.bio,
+//         status: chef.status,
+//         rating: chef.rating,
+//         experience: chef.experience,
+//         locations: chef.locations,
+//         busyDays: chef.busyDays,
+// >>>>>>> main
 
     // Step 7: Apply pagination and projection
     pipeline.push({

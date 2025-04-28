@@ -288,10 +288,12 @@ export class AuthService {
       await this.customerService.findAndDeleteByUserId(userId);
     }
     console.log('Deleted', user);
+    await this.userModel.findByIdAndDelete(userId);
 
+
+    console.log('Deleted', user);
     return {
       message: 'User deleted successfully',
-      user,
     };
   }
 
