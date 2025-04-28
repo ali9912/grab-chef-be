@@ -8,5 +8,5 @@ export class CreateBannerDto {
   description: string;
 
   @IsString()
-  imageUrl: string;
+  image: string;
 }
