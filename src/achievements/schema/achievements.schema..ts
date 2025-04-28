@@ -15,5 +15,9 @@ export const AchievementsSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    image: {
+        type: String,
+        required: true
+    },
     conditions: [AchievementSchema]
 });

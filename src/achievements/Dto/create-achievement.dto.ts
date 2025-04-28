@@ -8,6 +8,10 @@ export class CreateAchievementDto {
     @IsNotEmpty()
     label: string;
 
+    @IsString()
+    @IsNotEmpty()
+    image: string;
+
     @IsArray()
     @ArrayNotEmpty() 
     @ValidateNested({ each: true })

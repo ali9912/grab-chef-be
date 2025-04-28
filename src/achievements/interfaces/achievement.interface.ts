@@ -14,5 +14,6 @@ export type Achievement = {
 export interface Achievements extends Document {
     _id: string;
     label: string;
+    image: string;
     conditions: Achievement[]
 } 
