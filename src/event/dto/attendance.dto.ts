@@ -1,6 +1,7 @@
 import { IsDateString, IsEnum, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { AttendanceStatus } from '../interfaces/event.interface';
 import { LocationDto } from 'src/common/dto/location.dto';
+import { Type } from 'class-transformer';
 
 export class AttendanceDto {
   @IsEnum(AttendanceStatus)
@@ -12,5 +13,7 @@ export class AttendanceDto {
   markedAt?: string;
 
   @IsOptional()
-  location: LocationDto;
+  @ValidateNested()
+  @Type(() => LocationDto)
+  location?: LocationDto;
 }

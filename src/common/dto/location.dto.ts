@@ -1,11 +1,23 @@
 import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  ArrayMinSize,
   IsArray,
   IsNumber,
   IsOptional,
   IsString,
   ValidateNested,
 } from 'class-validator';
+
+
+export class CoordinatesDto {
+  @IsArray()
+  @ArrayMinSize(2)
+  @ArrayMaxSize(2)
+  @IsNumber({}, { each: true })
+  coordinates: number[];
+}
+
 
 export class LocationDto {
   @IsString()
@@ -24,5 +36,7 @@ export class LocationDto {
   key: string;
 
   @IsOptional()
-  location: { coordinates: [number] };
+  @ValidateNested()
+  @Type(() => CoordinatesDto)
+  location?: CoordinatesDto;
 }
