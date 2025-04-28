@@ -12,6 +12,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MenuModule } from './menu/menu.module';
 import { AchievementsModule } from './achievements/achievements.module';
+import { BannersModule } from './banners/banners.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { AchievementsModule } from './achievements/achievements.module';
     ReviewModule,
     MenuModule,
     AchievementsModule,
+    BannersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

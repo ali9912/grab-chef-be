@@ -26,7 +26,7 @@ export const extractChefInfo = (chef: Chef) => {
     certificates: chef.certificates,
     bio: chef.bio,
     status: chef.status,
-    rating: chef.rating,
+    rating: chef.avgRating,
     createdAt: chef.createdAt,
     experience: chef.experience,
     locations: chef.locations,

@@ -6,6 +6,7 @@ import {
   EventStatus,
   AttendanceStatus,
   Counter,
+  GetEventQueryType,
 } from './interfaces/event.interface';
 import { BookingDto } from './dto/booking.dto';
 import { CancelBookingDto, ConfirmBookingDto } from './dto/confirm-booking.dto';
@@ -194,7 +195,11 @@ export class EventService {
     return { message };
   }
 
-  async getEvents(userId: string, userRole: UserRole, urlQuery: PaginationDto) {
+  async getEvents(
+    userId: string,
+    userRole: UserRole,
+    urlQuery: GetEventQueryType,
+  ) {
     const { page = 1, limit = 10, status } = urlQuery;
     const skip = (page - 1) * limit;
 

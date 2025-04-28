@@ -1,3 +1,4 @@
+import { Customer } from 'aws-sdk/clients/connect';
 import {
   Controller,
   Get,
@@ -10,6 +11,7 @@ import {
   Req,
   HttpException,
   HttpStatus,
+  Query,
 } from '@nestjs/common';
 import { MenuService } from './menu.service';
 import { CreateMenuDto } from './dto/create-menu.dto';
@@ -20,10 +22,24 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { UserRole } from 'src/users/interfaces/user.interface';
 import { RequestUser } from 'src/auth/interfaces/request-user.interface';
+import { RandomMenuDto } from './dto/random-menu.dto';
 
 @Controller('menu')
 export class MenuController {
   constructor(private readonly menuService: MenuService) {}
+
+  @Get('random')
+  @UseGuards(JwtAuthGuard)
+  async getRandomMenu(@Query() randomMenuDto: RandomMenuDto) {
+    try {
+      return this.menuService.getRandomMenu(randomMenuDto);
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to get random menu.',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)

@@ -11,6 +11,7 @@ import { OtpSchema } from './schemas/otp.schema';
 import { UtilsModule } from '../utils/utils.module';
 import { ChefModule } from 'src/chef/chef.module';
 import { UserSchema } from 'src/users/schemas/user.schema';
+import { ChefSchema } from 'src/chef/schemas/chef.schema';
 import { EventModule } from 'src/event/event.module';
 import { CustomerModule } from 'src/customer/customer.module';
 import { MenuModule } from 'src/menu/menu.module';
@@ -30,6 +31,7 @@ import { MenuModule } from 'src/menu/menu.module';
     }),
     MongooseModule.forFeature([{ name: 'Otp', schema: OtpSchema }]),
     MongooseModule.forFeature([{ name: 'User', schema: UserSchema }]),
+    MongooseModule.forFeature([{ name: 'Chef', schema: ChefSchema }]),
     UsersModule,
     MenuModule,
     ChefModule,

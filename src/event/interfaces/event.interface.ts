@@ -1,3 +1,5 @@
+import { Type } from 'class-transformer';
+import { IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
 import { Document, Types } from 'mongoose';
 import { LocationType } from 'src/common/interfaces/location.interface';
 
@@ -47,4 +49,24 @@ export interface Event extends Document {
 export interface Counter extends Document {
   name: string;
   value: number;
+}
+
+
+export class GetEventQueryType {
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  @Type(() => Number)
+  page?: number;
+
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  @Type(() => Number)
+  limit?: number;
+
+  @IsString()
+  @IsOptional()
+  @IsEnum(EventStatus)
+  status?: string;
 }

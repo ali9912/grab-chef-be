@@ -21,6 +21,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/interfaces/user.interface';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { RequestUser } from 'src/auth/interfaces/request-user.interface';
+import { GetEventQueryType } from './interfaces/event.interface';
 
 @Controller('event')
 export class EventController {
@@ -145,7 +146,10 @@ export class EventController {
 
   @Get('list')
   @UseGuards(JwtAuthGuard)
-  async getEvents(@Query() queryDTO: PaginationDto, @Req() req: RequestUser) {
+  async getEvents(
+    @Query() queryDTO: GetEventQueryType,
+    @Req() req: RequestUser,
+  ) {
     try {
       return await this.eventService.getEvents(
         req.user._id.toString(),

@@ -1,9 +1,6 @@
-
 export type LocationType = {
   name: string;
   address: string;
   key: string;
-  latitude?: number;
-  longitude?: number;
+  location: { coordinates: [number] }; //long/lat
 };
-
