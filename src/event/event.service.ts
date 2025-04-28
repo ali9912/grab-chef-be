@@ -172,8 +172,16 @@ export class EventService {
     event.attendance = {
       status: attendanceDto.status as AttendanceStatus,
       markedAt: attendanceDto.markedAt || new Date().toDateString(),
-      location: attendanceDto.location,
+      location: attendanceDto.location
+        ? {
+            name: attendanceDto.location.name,
+            location: {
+              coordinates: attendanceDto.location.location.coordinates,
+            },
+          }
+        : undefined,
     };
+    console.log(event.attendance);
 
     let message = 'Attendance has been marked.';
 
