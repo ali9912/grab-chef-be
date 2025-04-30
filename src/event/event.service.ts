@@ -39,7 +39,9 @@ export class EventService {
       { new: true, upsert: true }, // Create if it doesn't exist
     );
 
-    const event = this.eventModel.create({
+    console.log('CREATING CUSTOMER', customerId);
+
+    const event = await this.eventModel.create({
       customer: customerId,
       chef: bookingDto.chefId,
       area: bookingDto.area,
@@ -208,9 +210,11 @@ export class EventService {
     userRole: UserRole,
     urlQuery: GetEventQueryType,
   ) {
-    const { page = 1, limit = 10, status } = urlQuery;
+    const { page = 1, limit = 1000, status } = urlQuery;
     const skip = (page - 1) * limit;
 
+    // console.log(userRole);
+    // console.log(userId);
     let query = {};
 
     // Filter events based on user role
