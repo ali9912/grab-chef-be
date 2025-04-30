@@ -9,7 +9,7 @@ import {
   IsMongoId,
   Min,
 } from 'class-validator';
-import { MenuItemCategory } from '../interfaces/menu.interfaces';
+import { CuisineEnum, MenuItemCategory } from '../interfaces/menu.interfaces';
 
 export class CreateMenuDto {
   @IsString()
@@ -33,6 +33,10 @@ export class CreateMenuDto {
   @IsEnum(MenuItemCategory)
   @IsNotEmpty()
   category: MenuItemCategory;
+
+  @IsEnum(CuisineEnum)
+  @IsNotEmpty()
+  cuisine: MenuItemCategory;
 
   @IsBoolean()
   @IsOptional()

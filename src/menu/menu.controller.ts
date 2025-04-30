@@ -22,7 +22,7 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { UserRole } from 'src/users/interfaces/user.interface';
 import { RequestUser } from 'src/auth/interfaces/request-user.interface';
-import { RandomMenuDto } from './dto/random-menu.dto';
+import { MenuQueryDto } from './dto/random-menu.dto';
 
 @Controller('menu')
 export class MenuController {
@@ -30,9 +30,22 @@ export class MenuController {
 
   @Get('random')
   @UseGuards(JwtAuthGuard)
-  async getRandomMenu(@Query() randomMenuDto: RandomMenuDto) {
+  async getRandomMenu() {
     try {
-      return this.menuService.getRandomMenu(randomMenuDto);
+      return this.menuService.getRandomMenu();
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to get random menu.',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('list')
+  @UseGuards(JwtAuthGuard)
+  async getMenuList(@Query() menuQueryDto: MenuQueryDto) {
+    try {
+      return this.menuService.getMenuList(menuQueryDto);
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to get random menu.',

@@ -1,6 +1,5 @@
 import * as mongoose from 'mongoose';
-import { MenuItemCategory } from '../interfaces/menu.interfaces';
-import { Chef } from 'src/chef/interfaces/chef.interface';
+import { CuisineEnum, MenuItemCategory } from '../interfaces/menu.interfaces';
 
 export const MenuSchema = new mongoose.Schema({
   chef: {
@@ -29,6 +28,11 @@ export const MenuSchema = new mongoose.Schema({
   category: {
     type: String,
     enum: Object.values(MenuItemCategory),
+    required: true,
+  },
+  cuisine: {
+    type: String,
+    enum: Object.values(CuisineEnum),
     required: true,
   },
   isSpecial: {
