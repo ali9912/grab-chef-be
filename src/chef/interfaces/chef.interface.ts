@@ -44,3 +44,8 @@ export interface Chef extends Document {
   hasAddeddEmergencyContact?: boolean;
   emergencyContact: EmergencyType[];
 }
+
+export interface FavouriteChef extends Document {
+  customer: Types.ObjectId;
+  chef: Types.ObjectId;
+}

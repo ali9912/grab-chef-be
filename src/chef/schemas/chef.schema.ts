@@ -89,3 +89,16 @@ export const ChefSchema = new mongoose.Schema({
 
   hasAddeddEmergencyContact: { type: Boolean, default: false },
 });
+
+export const FavouriteChefSchema = new mongoose.Schema({
+  customer: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
+  chef: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
+});

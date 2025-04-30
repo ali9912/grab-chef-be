@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpException,
   HttpStatus,
@@ -25,9 +26,15 @@ export class ChefController {
   constructor(private readonly chefService: ChefService) {}
 
   @Get('list')
-  async getAllChefs(@Query() getChefQuery: GetChefQueryType) {
+  @UseGuards(JwtAuthGuard)
+  async getAllChefs(
+    @Query() getChefQuery: GetChefQueryType,
+    @Req() req: RequestUser,
+  ) {
     try {
-      return await this.chefService.getAllChefs(getChefQuery);
+      const customerId =
+        req?.user?.role === UserRole.CUSTOMER ? req?.user?._id?.toString() : '';
+      return await this.chefService.getAllChefs(getChefQuery, customerId);
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to get chefs',
@@ -59,6 +66,57 @@ export class ChefController {
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to get chefs',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('favourite')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CUSTOMER)
+  async getCustomerFavouritesChef(@Req() req: RequestUser) {
+    try {
+      const customer = req.user._id.toString();
+      return await this.chefService.getCustomerFavouritesChef(customer);
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to add favourite chef',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post(':chefId/favourite')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CUSTOMER)
+  async addChefToFavourite(
+    @Param('chefId') chefId: string,
+    @Req() req: RequestUser,
+  ) {
+    try {
+      const customer = req.user._id.toString();
+      return await this.chefService.addToFavourite(customer, chefId);
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to add favourite chef',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Delete(':chefId/favourite')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CUSTOMER)
+  async removeChefToFavourite(
+    @Param('chefId') chefId: string,
+    @Req() req: RequestUser,
+  ) {
+    try {
+      const customer = req.user._id.toString();
+      return await this.chefService.removeFromFavourite(customer, chefId);
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to remove favourite chef',
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

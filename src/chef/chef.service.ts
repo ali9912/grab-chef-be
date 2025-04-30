@@ -1,10 +1,14 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import mongoose, { Model, Types } from 'mongoose';
 import { GetChefQueryType, PaginationDto } from '../common/dto/pagination.dto';
 import { UsersService } from '../users/users.service';
 import { AwsS3Service } from '../utils/aws-s3.service';
-import { Chef, ChefVerificationStatus } from './interfaces/chef.interface';
+import {
+  Chef,
+  ChefVerificationStatus,
+  FavouriteChef,
+} from './interfaces/chef.interface';
 import { MenuItem } from 'src/menu/interfaces/menu.interfaces';
 import { extractChefInfo } from 'src/helpers/extract-data';
 import { BusyDataDto } from './dto/busy-data-dto';
@@ -15,6 +19,8 @@ export class ChefService {
   constructor(
     @InjectModel('Chef') private readonly chefModel: Model<Chef>,
     @InjectModel('MenuItem') private readonly menuItemModel: Model<MenuItem>,
+    @InjectModel('FavouriteChef')
+    private readonly favouriteChefModel: Model<FavouriteChef>,
     private readonly usersService: UsersService,
     private readonly awsS3Service: AwsS3Service,
   ) {}
@@ -22,12 +28,36 @@ export class ChefService {
   async getChefByUserId(userId: string) {
     return await this.chefModel.findOne({ userId });
   }
-  async getAllChefs(query: GetChefQueryType) {
+
+  async getCustomerFavouritesChef(userId: string) {
+    const favourites = await this.favouriteChefModel
+      .find({ customer: userId })
+      .populate('chef') // Populate the chef (User model)
+      .populate('customer'); // Populate the customer (User model)
+
+    // Format output
+    // const formatted = favourites.map((fav) => {
+    //   const userDetails = fav.chef.toObject(); // Assuming chef is a User
+    //   return {
+    //     user: {
+    //       ...userDetails,
+    //       chef: fav.chef._id,
+    //       customer: fav.customer._id,
+    //     },
+    //   };
+    // });
+
+    return { favourites };
+  }
+
+  async getAllChefs(query: GetChefQueryType, customerId?: string) {
     const { page = 1, limit = 10, search, status, latitude, longitude } = query;
     const skip = (page - 1) * Number(limit);
 
     // Initialize the aggregation pipeline
     const pipeline: any[] = [];
+
+    const customerObjectId = new mongoose.Types.ObjectId(customerId); // required
 
     // Step 1: Handle geoNear if location is provided
     if (latitude != null && longitude != null) {
@@ -95,30 +125,35 @@ export class ChefService {
       pipeline.push({ $sort: { avgRating: -1 } });
     }
 
-    // =======
-    //     const [chefs, totalCount] = await Promise.all([
-    //       this.chefModel
-    //         .find(query)
-    //         .skip(skip)
-    //         .limit(limit)
-    //         .populate('userId')
-    //         .exec(),
-    //       this.chefModel.countDocuments(query).exec(),
-    //     ]);
-
-    //     const formattedChefs = chefs.map((chef) => ({
-    //       _id: chef.userId?._id,
-    //       user: chef.userId,
-    //       chef: {
-    //         idCard: chef.idCard,
-    //         certificates: chef.certificates,
-    //         bio: chef.bio,
-    //         status: chef.status,
-    //         rating: chef.rating,
-    //         experience: chef.experience,
-    //         locations: chef.locations,
-    //         busyDays: chef.busyDays,
-    // >>>>>>> main
+    // Add this ONLY if customerId is provided
+    if (customerId) {
+      pipeline.push(
+        {
+          $lookup: {
+            from: 'favouritechefs',
+            let: { chefUserId: '$user._id' },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ['$chef', '$$chefUserId'] },
+                      { $eq: ['$customer', customerObjectId] },
+                    ],
+                  },
+                },
+              },
+            ],
+            as: 'favouriteData',
+          },
+        },
+        {
+          $addFields: {
+            isFavourite: { $gt: [{ $size: '$favouriteData' }, 0] },
+          },
+        },
+      );
+    }
 
     // Step 7: Apply pagination and projection
     pipeline.push({
@@ -149,6 +184,7 @@ export class ChefService {
               achievements: 1, // Include achievements if needed
               emergencyContact: 1, // Include emergency contact if needed
               hasAddeddEmergencyContact: 1, // Add if required
+              isFavourite: 1,
             },
           },
         ],
@@ -314,6 +350,43 @@ export class ChefService {
     }
 
     await chef.save();
+  }
+
+  async addToFavourite(customerId: string, chefId: string) {
+    const exists = await this.favouriteChefModel.findOne({
+      customer: customerId,
+      chef: chefId,
+    });
+
+    if (exists) {
+      throw new HttpException(
+        'Chef already added to favourites',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const favourite = await this.favouriteChefModel.create({
+      customer: customerId,
+      chef: chefId,
+    });
+
+    return { success: true, message: 'Added to favourites.' };
+  }
+
+  async removeFromFavourite(customerId: string, chefId: string) {
+    const result = await this.favouriteChefModel.findOneAndDelete({
+      customer: customerId,
+      chef: chefId,
+    });
+
+    if (!result) {
+      throw new HttpException(
+        'Chef not found in favourites',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    return { message: 'Chef removed from favourites' };
   }
 
   // async addMenuItem(menuItemDto: MenuItemDto) {
