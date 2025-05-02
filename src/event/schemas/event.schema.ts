@@ -1,6 +1,6 @@
 import * as mongoose from 'mongoose';
-import { EventStatus, AttendanceStatus } from '../interfaces/event.interface';
 import { LocationSchema } from 'src/common/schemas/location.schema';
+import { AttendanceStatus, EventStatus } from '../interfaces/event.interface';
 
 export const CounterSchema = new mongoose.Schema({
   name: { type: String, required: true, unique: true },
@@ -17,6 +17,17 @@ const MenuSchema = new mongoose.Schema({
     type: Number,
     required: true,
     min: 1,
+  },
+});
+
+const IngredientSchema = new mongoose.Schema({
+  name: {
+    type: String,
+  },
+  quantity: {
+    type: Number,
+    min: 1,
+    default: 1,
   },
 });
 
@@ -49,6 +60,8 @@ export const EventSchema = new mongoose.Schema({
   fullAddress: LocationSchema,
 
   menuItems: [MenuSchema],
+
+  ingredients: [IngredientSchema],
 
   orderId: {
     type: Number,

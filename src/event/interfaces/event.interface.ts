@@ -28,6 +28,11 @@ export interface Attendance {
   location?: LocationType;
 }
 
+export type Ingredients = {
+  name: string;
+  quantity?: number;
+};
+
 export interface Event extends Document {
   customer: Types.ObjectId;
   chef: Types.ObjectId;
@@ -44,13 +49,13 @@ export interface Event extends Document {
   updatedAt: Date;
   orderId: number;
   cancelReason?: string;
+  ingredients: Ingredients[];
 }
 
 export interface Counter extends Document {
   name: string;
   value: number;
 }
-
 
 export class GetEventQueryType {
   @IsInt()

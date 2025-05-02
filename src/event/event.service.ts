@@ -18,6 +18,10 @@ import { User, UserRole } from '../users/interfaces/user.interface';
 import { formatDateToYYYYMMDD } from 'src/helpers/date-formatter';
 import { Chef } from 'src/chef/interfaces/chef.interface';
 import { AchievementsService } from 'src/achievements/achievements.service';
+import {
+  AddIngredientsDto,
+  IngredientsDto,
+} from './dto/add-ingredients.dto.ts';
 
 @Injectable()
 export class EventService {
@@ -150,6 +154,55 @@ export class EventService {
     await event.save();
 
     return { message: 'Booking Cancelled by chef', success: true };
+  }
+
+  async addIngredients(
+    userId: string,
+    eventId: string,
+    addIngredientsDto: AddIngredientsDto,
+  ) {
+    const event = await this.eventModel.findById(eventId).exec();
+    if (!event) {
+      throw new HttpException('Event not found', HttpStatus.NOT_FOUND);
+    }
+
+    // Ensure event belongs to chef
+    if (event.chef.toString() !== userId) {
+      throw new HttpException(
+        'Event does not belong to chef',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    // Merge existing ingredients with new ones while maintaining uniqueness
+    const existingIngredients = event.ingredients || [];
+    const newIngredients = addIngredientsDto.ingredients;
+
+    const updatedIngredients = [...existingIngredients];
+
+    newIngredients.forEach((newIngredient) => {
+      const existingIngredientIndex = updatedIngredients.findIndex(
+        (existingIngredient) =>
+          existingIngredient.name.toLowerCase() ===
+          newIngredient.name.toLowerCase(),
+      );
+
+      if (existingIngredientIndex !== -1) {
+        // Update the quantity of the existing ingredient
+        updatedIngredients[existingIngredientIndex].quantity =
+          newIngredient.quantity;
+      } else {
+        // Add the new ingredient if it doesn't exist
+        updatedIngredients.push(newIngredient);
+      }
+    });
+
+    // Update the event's ingredients
+    event.ingredients = updatedIngredients;
+
+    await event.save();
+
+    return { message: 'Ingredients added/updated successfully', success: true };
   }
 
   async markAttendance(

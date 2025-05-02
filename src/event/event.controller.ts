@@ -1,26 +1,27 @@
 import {
+  Body,
   Controller,
   Get,
-  Post,
-  Body,
-  Param,
-  UseGuards,
-  Query,
   HttpException,
   HttpStatus,
-  Request,
+  Param,
+  Post,
+  Query,
   Req,
+  UseGuards
 } from '@nestjs/common';
-import { EventService } from './event.service';
-import { BookingDto } from './dto/booking.dto';
-import { CancelBookingDto, ConfirmBookingDto } from './dto/confirm-booking.dto';
-import { AttendanceDto } from './dto/attendance.dto';
+import { RequestUser } from 'src/auth/interfaces/request-user.interface';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/interfaces/user.interface';
-import { PaginationDto } from '../common/dto/pagination.dto';
-import { RequestUser } from 'src/auth/interfaces/request-user.interface';
+import {
+  AddIngredientsDto
+} from './dto/add-ingredients.dto.ts';
+import { AttendanceDto } from './dto/attendance.dto';
+import { BookingDto } from './dto/booking.dto';
+import { CancelBookingDto, ConfirmBookingDto } from './dto/confirm-booking.dto';
+import { EventService } from './event.service';
 import { GetEventQueryType } from './interfaces/event.interface';
 
 @Controller('event')
@@ -100,6 +101,28 @@ export class EventController {
         req.user._id.toString(),
         eventId,
         confirmBookingDto,
+      );
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to confirm booking',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post(':eventId/ingredients')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CHEF)
+  async addIngredients(
+    @Param('eventId') eventId: string,
+    @Body() addIngredientsDto: AddIngredientsDto,
+    @Req() req: RequestUser,
+  ) {
+    try {
+      return await this.eventService.addIngredients(
+        req.user._id.toString(),
+        eventId,
+        addIngredientsDto,
       );
     } catch (error) {
       throw new HttpException(
