@@ -9,6 +9,7 @@ import {
   Put,
   Param,
   Delete,
+  Patch,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ChefAuthDto, RegisterDto } from './dto/register.dto';
@@ -21,6 +22,10 @@ import { LoginWithPhoneDto } from './dto/signup-with-phone.dto';
 import { EditChefDto } from './dto/edit-chef.dto';
 import { RegisterCustomerDto } from './dto/register-customer.dto';
 import { AddPhoneNumberDTO } from './dto/add-phonenumber-dto.dto';
+import { RolesGuard } from './guards/roles.guard';
+import { Roles } from './decorators/roles.decorator';
+import { UserRole } from 'src/users/interfaces/user.interface';
+import { EditCustomerDto } from './dto/edit-customer.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -59,6 +64,24 @@ export class AuthController {
   async registerCustomer(@Body() registerDto: RegisterCustomerDto) {
     try {
       return await this.authService.registerCustomer(registerDto);
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Registration failed',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Patch('customer/edit')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CUSTOMER)
+  async editCustomer(
+    @Body() editCustomer: EditCustomerDto,
+    @Req() req: RequestUser,
+  ) {
+    try {
+      const userId = req.user._id.toString();
+      return await this.authService.editCustomer(editCustomer, userId);
     } catch (error) {
       throw new HttpException(
         error.message || 'Registration failed',

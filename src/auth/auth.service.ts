@@ -21,6 +21,7 @@ import { Chef } from 'src/chef/interfaces/chef.interface';
 import { MenuService } from 'src/menu/menu.service';
 import { EventService } from 'src/event/event.service';
 import { CustomerService } from 'src/customer/customer.service';
+import { EditCustomerDto } from './dto/edit-customer.dto';
 
 @Injectable()
 export class AuthService {
@@ -191,6 +192,22 @@ export class AuthService {
     };
   }
 
+  async editCustomer(editCustomer: EditCustomerDto, userId: string) {
+    // Check if user exists
+    const userExists = await this.usersService.findById(userId);
+
+    if (!userExists) {
+      throw new HttpException('User donot exists', HttpStatus.BAD_REQUEST);
+    }
+    // Create user
+    const newUser = await userExists.updateOne(editCustomer, { new: true });
+
+    return {
+      status: 'success',
+      message: 'User edited successfully',
+    };
+  }
+
   async addPhoneNumber(phoneNumberDto: AddPhoneNumberDTO, userId: string) {
     // Check if user exists
     const userExists = await this.usersService.findById(userId);
@@ -289,7 +306,6 @@ export class AuthService {
     }
     console.log('Deleted', user);
     await this.userModel.findByIdAndDelete(userId);
-
 
     console.log('Deleted', user);
     return {

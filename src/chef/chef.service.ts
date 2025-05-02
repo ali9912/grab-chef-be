@@ -32,8 +32,14 @@ export class ChefService {
   async getCustomerFavouritesChef(userId: string) {
     const favourites = await this.favouriteChefModel
       .find({ customer: userId })
-      .populate('chef') // Populate the chef (User model)
-      .populate('customer'); // Populate the customer (User model)
+      .populate({
+        path: 'chef', // This is the User
+        populate: { path: 'chef', model: 'Chef' }, // Nested population: User.chef
+      }) // Populate the chef (User model)
+      .populate({
+        path: 'customer', // This is the User
+        populate: { path: 'customer', model: 'Customer' }, // Nested population: User.chef
+      }); // Populate the customer (User model)
 
     // Format output
     // const formatted = favourites.map((fav) => {
