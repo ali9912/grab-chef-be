@@ -57,7 +57,7 @@ export class ChefService {
   }
 
   async getAllChefs(query: GetChefQueryType, customerId?: string) {
-    const { page = 1, limit = 10, search, status, latitude, longitude } = query;
+    const { page = 1, limit = 10000, search, status, latitude, longitude } = query;
     const skip = (page - 1) * Number(limit);
 
     // Initialize the aggregation pipeline
