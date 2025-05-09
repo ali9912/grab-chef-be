@@ -14,6 +14,9 @@ export const UserSchema = new mongoose.Schema({
   email: {
     type: String,
   },
+  fcmTokens: {
+    type: [String], // Changed to an array of strings
+  },
   password: {
     type: String,
   },

@@ -1,4 +1,4 @@
-import { IsEmail, IsString } from 'class-validator';
+import { IsEmail, IsOptional, IsString } from 'class-validator';
 
 export class RegisterCustomerDto {
   @IsString()
@@ -12,4 +12,12 @@ export class RegisterCustomerDto {
 
   @IsString()
   password?: string;
+
+  @IsString()
+  @IsOptional()
+  profilePicture?: string;
+
+  @IsString()
+  @IsOptional()
+  fcmToken?: string;
 }

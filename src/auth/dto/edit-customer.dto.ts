@@ -1,4 +1,4 @@
-import { IsEmail, IsString } from 'class-validator';
+import { IsEmail, IsOptional, IsString } from 'class-validator';
 
 export class EditCustomerDto {
   @IsString()
@@ -9,4 +9,7 @@ export class EditCustomerDto {
 
   @IsEmail()
   email?: string;
+
+  @IsOptional()
+  profilePicture?: string;
 }
