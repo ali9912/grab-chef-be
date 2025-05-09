@@ -14,7 +14,7 @@ import {
 import { AuthService } from './auth.service';
 import { ChefAuthDto, RegisterDto } from './dto/register.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
-import { LoginDto } from './dto/login.dto';
+import { LoginDto, LogoutDto } from './dto/login.dto';
 import { CreatePasswordDto } from './dto/create-password.dto';
 import { JwtAuthChefGuard, JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RequestUser } from './interfaces/request-user.interface';
@@ -29,7 +29,7 @@ import { EditCustomerDto } from './dto/edit-customer.dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   @Post('chef')
   async chefAuth(@Body() chefAuthDto: ChefAuthDto) {
@@ -201,6 +201,20 @@ export class AuthController {
   async login(@Body() loginDto: LoginDto) {
     try {
       return await this.authService.login(loginDto);
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Login failed',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  async logout(@Body() logoutDto: LogoutDto, @Req() req: RequestUser) {
+    try {
+      const userId = req.user._id.toString()
+      return await this.authService.logout(logoutDto, userId);
     } catch (error) {
       throw new HttpException(
         error.message || 'Login failed',

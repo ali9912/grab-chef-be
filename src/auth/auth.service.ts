@@ -1,27 +1,27 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { UsersService } from '../users/users.service';
-import { ChefAuthDto, RegisterDto } from './dto/register.dto';
-import { VerifyOtpDto } from './dto/verify-otp.dto';
-import { LoginDto } from './dto/login.dto';
-import { Otp } from './interfaces/otp.interface';
-import { User, UserRole } from '../users/interfaces/user.interface';
-import { TwilioService } from '../utils/twilio.service';
-import { CreatePasswordDto } from './dto/create-password.dto';
-import { LoginWithPhoneDto } from './dto/signup-with-phone.dto';
-import { comparePassword, encryptPassword } from 'src/helpers/password-helper';
-import { EditChefDto } from './dto/edit-chef.dto';
 import { ChefService } from 'src/chef/chef.service';
-import { RegisterCustomerDto } from './dto/register-customer.dto';
-import { AddPhoneNumberDTO } from './dto/add-phonenumber-dto.dto';
 import { Chef } from 'src/chef/interfaces/chef.interface';
-import { MenuService } from 'src/menu/menu.service';
-import { EventService } from 'src/event/event.service';
 import { CustomerService } from 'src/customer/customer.service';
+import { EventService } from 'src/event/event.service';
+import { comparePassword, encryptPassword } from 'src/helpers/password-helper';
+import { MenuService } from 'src/menu/menu.service';
+import { User, UserRole } from '../users/interfaces/user.interface';
+import { UsersService } from '../users/users.service';
+import { TwilioService } from '../utils/twilio.service';
+import { AddPhoneNumberDTO } from './dto/add-phonenumber-dto.dto';
+import { CreatePasswordDto } from './dto/create-password.dto';
+import { EditChefDto } from './dto/edit-chef.dto';
 import { EditCustomerDto } from './dto/edit-customer.dto';
+import { LoginDto, LogoutDto } from './dto/login.dto';
+import { RegisterCustomerDto } from './dto/register-customer.dto';
+import { ChefAuthDto } from './dto/register.dto';
+import { LoginWithPhoneDto } from './dto/signup-with-phone.dto';
+import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { Otp } from './interfaces/otp.interface';
 
 @Injectable()
 export class AuthService {
@@ -37,7 +37,7 @@ export class AuthService {
     @InjectModel('Otp') private readonly otpModel: Model<Otp>,
     @InjectModel('User') private readonly userModel: Model<User>,
     @InjectModel('Chef') private readonly chefModel: Model<Chef>,
-  ) {}
+  ) { }
 
   async chefAuth(chefAuthDto: ChefAuthDto) {
     const { phoneNumber } = chefAuthDto;
@@ -55,7 +55,7 @@ export class AuthService {
   }
 
   async verifyOtp(verifyOtpDto: VerifyOtpDto) {
-    const { phoneNumber, otp } = verifyOtpDto;
+    const { phoneNumber, otp, fcmToken } = verifyOtpDto;
 
     // Find user
     const user = await (
@@ -80,6 +80,11 @@ export class AuthService {
 
     // Update user verification status
     await this.usersService.updateVerificationStatus(user._id.toString(), true);
+
+    // If fcmToken exists, add it to the user's fcmTokens array without duplicates
+    if (fcmToken) {
+      await this.addFcmTokenToUser(fcmToken, user._id.toString())
+    }
 
     // Delete OTP record
     await this.otpModel.deleteOne({ _id: otpRecord._id }).exec();
@@ -182,6 +187,10 @@ export class AuthService {
     // Create user
     const newUser = await this.usersService.createCustomer(registerDto);
 
+    if (registerDto.fcmToken) {
+      await this.addFcmTokenToUser(registerDto.fcmToken, newUser._id.toString())
+    }
+
     const token = this.generateToken(newUser);
 
     return {
@@ -264,7 +273,7 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto) {
-    const { email, password } = loginDto;
+    const { email, password, fcmToken } = loginDto;
 
     // Check if user exists
     const user = await this.usersService.findByEmail(email);
@@ -281,6 +290,10 @@ export class AuthService {
       );
     }
 
+    if (fcmToken) {
+      await this.addFcmTokenToUser(fcmToken, user._id.toString())
+    }
+
     const token = this.generateToken(user);
 
     const updatedUser = await user.populate('chef');
@@ -290,6 +303,32 @@ export class AuthService {
       user: updatedUser,
       token,
       success: true,
+    };
+  }
+
+  async logout(logoutDto: LogoutDto, userId: string) {
+    const { fcmToken } = logoutDto;
+
+    // Check if user exists
+    const user = await this.userModel.findById(userId);
+
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+
+    // Remove the fcmToken from the user's fcmTokens array
+    if (fcmToken) {
+      await this.userModel.findByIdAndUpdate(
+        userId,
+        {
+          $pull: { fcmTokens: fcmToken }, // Remove the specified fcmToken
+        },
+        { new: true }
+      );
+    }
+
+    return {
+      message: 'User logout successfully',
     };
   }
 
@@ -352,5 +391,17 @@ export class AuthService {
     };
 
     return this.jwtService.sign(payload);
+  }
+
+  private async addFcmTokenToUser(fcmToken: string, userId: string) {
+    if (fcmToken) {
+      await this.userModel.findByIdAndUpdate(
+        userId,
+        {
+          $addToSet: { fcmTokens: fcmToken }, // Add fcmToken only if it doesn't already exist
+        },
+        { new: true }
+      );
+    }
   }
 }

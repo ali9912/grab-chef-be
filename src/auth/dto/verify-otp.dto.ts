@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, Matches, Length } from 'class-validator';
+import { IsString, IsNotEmpty, Matches, Length, IsOptional } from 'class-validator';
 
 export class VerifyOtpDto {
   @IsString()
@@ -7,6 +7,10 @@ export class VerifyOtpDto {
     message: 'Phone number must be in international format (e.g., +123456789)',
   })
   phoneNumber: string;
+
+  @IsString()
+  @IsOptional()
+  fcmToken: string;
 
   @IsString()
   @IsNotEmpty()
