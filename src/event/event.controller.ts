@@ -90,7 +90,7 @@ export class EventController {
 
   @Post(':eventId/chef/cancel')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.CUSTOMER)
+  @Roles(UserRole.CHEF)
   async chefCancelEvent(
     @Param('eventId') eventId: string,
     @Body() confirmBookingDto: CancelBookingDto,

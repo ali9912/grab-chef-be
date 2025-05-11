@@ -136,6 +136,24 @@ export class EventService {
   ) {
     const event = await this.eventModel.findById(eventId).exec();
     if (!event) {
+      throw new HttpException(
+        'This event doenst exists.',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    if (event.status === EventStatus.CANCELLED) {
+      throw new HttpException(
+        'Event is already cancelled',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const eventDate = new Date(event.date).toISOString().split('T')[0];
+
+    console.log({ time: event.time, date: event.date });
+
+    if (!event) {
       throw new HttpException('Event not found', HttpStatus.NOT_FOUND);
     }
 
@@ -146,6 +164,28 @@ export class EventService {
         HttpStatus.FORBIDDEN,
       );
     }
+
+    const chef = await this.chefModel.findOne({ userId });
+    console.log('===chef.busydays===>', JSON.stringify(chef.busyDays, null, 1));
+
+    let busyDays = chef.busyDays.map((i) => {
+      let item = i;
+      const busyDate = new Date(i.date).toISOString().split('T')[0];
+      if (busyDate === eventDate) {
+        if (i.timeSlots.includes(event.time)) {
+          if (i.timeSlots.length == 1) {
+            item = null;
+            return null;
+          }
+          item.timeSlots = item.timeSlots.filter((u) => u !== event.time);
+        }
+      }
+      return item;
+    });
+
+    chef.busyDays = busyDays.filter((i) => i != null);
+    console.log('===busyDays===>', JSON.stringify(chef.busyDays, null, 1));
+    await chef.save();
 
     // Update event status
     event.status = EventStatus.CANCELLED;
