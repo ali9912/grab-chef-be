@@ -284,7 +284,8 @@ export class ChefService {
     if (event) {
       for (const busytime of busyDataDto.timeSlots) {
         if (busytime === event.time) {
-          throw new HttpException(`Event found on this date at ${busytime}`, HttpStatus.CONFLICT)
+          busyDataDto.timeSlots = [...busyDataDto.timeSlots.filter(time => time !== busytime)]
+          // throw new HttpException(`Event found on this date at ${busytime}`, HttpStatus.CONFLICT)
         }
       }
     }
