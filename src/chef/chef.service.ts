@@ -25,7 +25,7 @@ export class ChefService {
     private readonly favouriteChefModel: Model<FavouriteChef>,
     private readonly usersService: UsersService,
     private readonly awsS3Service: AwsS3Service,
-  ) { }
+  ) {}
 
   async getChefByUserId(userId: string) {
     return await this.chefModel.findOne({ userId });
@@ -280,13 +280,15 @@ export class ChefService {
       );
     }
 
-    const event = await this.eventModel.findOne({ chef: userId, status: EventStatus.CONFIRMED, date: new Date(busyDataDto.date) })
+    const event = await this.eventModel.findOne({
+      chef: userId,
+      status: EventStatus.CONFIRMED,
+      date: new Date(busyDataDto.date),
+    });
     if (event) {
-      for (const busytime of busyDataDto.timeSlots) {
-        if (busytime === event.time) {
-          busyDataDto.timeSlots = [...busyDataDto.timeSlots.filter(time => time !== busytime)]
-          // throw new HttpException(`Event found on this date at ${busytime}`, HttpStatus.CONFLICT)
-        }
+      if (!busyDataDto.timeSlots.includes(event.time)) {
+        // making sure the event time is not missed
+        busyDataDto.timeSlots = [...busyDataDto.timeSlots, event.time];
       }
     }
     // Add the new busy day
@@ -419,28 +421,7 @@ export class ChefService {
     );
 
     if (existingBusyDay) {
-      // Check for overlapping time slots
-      // If no overlap, merge the new time slots with the existing ones
-      const chefsDateTimeSlots = [...existingBusyDay.timeSlots]
-      existingBusyDay.timeSlots.push(...busyDataDto.timeSlots);
-      existingBusyDay.timeSlots = [...new Set(existingBusyDay.timeSlots)]; // Ensure uniqueness
-
-      const overlappingSlots = busyDataDto.timeSlots.find((slot) => {
-        return chefsDateTimeSlots.includes(slot);
-      });
-
-      console.log("======[overlappingSlots]=====", JSON.stringify(overlappingSlots, null, 1))
-
-      if (overlappingSlots) {
-        existingBusyDay.timeSlots = existingBusyDay.timeSlots.filter(i => i != overlappingSlots)
-        // throw new HttpException(
-        //   `Time ${overlappingSlots} slots for this date overlap with existing schedule`,
-        //   HttpStatus.CONFLICT,
-        // );
-      }
-
-      console.log("======[existingBusyDay]=====", JSON.stringify(existingBusyDay, null, 1))
-
+      existingBusyDay.timeSlots = [...new Set(busyDataDto.timeSlots)]; // Ensure uniqueness
     } else {
       // Add the new busy day
       chef.busyDays.push({ ...busyDataDto, date: new Date(busyDataDto.date) });
