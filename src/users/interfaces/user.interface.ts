@@ -1,4 +1,3 @@
-
 import { Document, Types } from 'mongoose';
 import { Chef } from 'src/chef/interfaces/chef.interface';
 import { Customer } from 'src/customer/interface/customer.interface';
@@ -22,4 +21,5 @@ export interface User extends Document {
   password: string;
   chef?: Chef;
   customer?: Customer;
+  fcmTokens?: [string];
 }

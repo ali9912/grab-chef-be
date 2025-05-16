@@ -5,6 +5,7 @@ import { UserSchema } from 'src/users/schemas/user.schema';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AchievementsSchema } from './schema/achievements.schema.';
 import { ChefSchema } from 'src/chef/schemas/chef.schema';
+import { NotificationsModule } from 'src/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { ChefSchema } from 'src/chef/schemas/chef.schema';
     MongooseModule.forFeature([
       { name: 'Achievements', schema: AchievementsSchema },
     ]),
+    NotificationsModule,
   ],
   controllers: [AchievementsController],
   providers: [AchievementsService],

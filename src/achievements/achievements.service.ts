@@ -8,6 +8,14 @@ import {
   Achievements,
 } from './interfaces/achievement.interface';
 import { Chef } from 'src/chef/interfaces/chef.interface';
+import { NotificationsService } from 'src/notifications/notifications.service';
+
+//       await this.notifcationService.sendNotificationToMultipleTokens({
+//   tokens: customerUser?.fcmTokens,
+//   title: 'Event has been cancelled',
+//   body: 'Unfortunately, chef event has been cancelled by Chef, Click to see more.',
+//   token: '',
+// });
 
 @Injectable()
 export class AchievementsService {
@@ -16,6 +24,7 @@ export class AchievementsService {
     @InjectModel('Chef') private readonly chefModel: Model<Chef>,
     @InjectModel('Achievements')
     private readonly achievementsModel: Model<Achievements>,
+    private readonly notifcationService: NotificationsService,
   ) {}
 
   async create(createAchievementDto: CreateAchievementDto) {
@@ -43,7 +52,7 @@ export class AchievementsService {
     const user = await this.userModel
       .findOne({ _id: userId, role: UserRole.CHEF })
       .populate('chef');
-      
+
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
@@ -65,6 +74,7 @@ export class AchievementsService {
         HttpStatus.NOT_FOUND,
       );
     }
+    const user = await this.userModel.findById(chef.userId);
     const userAchievements = chef.achievements || [];
     const achievements = await this.achievementsModel.find();
     const userAchievementIds = new Set(userAchievements.map((j) => j._id));
@@ -106,6 +116,12 @@ export class AchievementsService {
       if (isMatched) {
         console.log('!!!!!!!!!MATCHED!!!!!!!!!', acheivement.label);
         matchedItems.push(acheivement);
+        await this.notifcationService.sendNotificationToMultipleTokens({
+          token: '',
+          tokens: user.fcmTokens,
+          title: `Congratulations! You have won ${acheivement.label} medal.`,
+          body: 'Open your app to see the achievement.',
+        });
       }
     }
     console.log('=======Matched Items=========', matchedItems);

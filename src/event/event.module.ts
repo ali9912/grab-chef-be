@@ -1,3 +1,4 @@
+import { NotificationsModule } from './../notifications/notifications.module';
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { EventController } from './event.controller';
@@ -18,6 +19,7 @@ import { AchievementsModule } from 'src/achievements/achievements.module';
     ChefModule,
     CustomerModule,
     AchievementsModule,
+    NotificationsModule,
   ],
   controllers: [EventController],
   providers: [EventService],
