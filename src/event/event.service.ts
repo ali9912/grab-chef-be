@@ -186,8 +186,6 @@ export class EventService {
       );
     }
 
-    const eventDate = new Date(event.date).toISOString().split('T')[0];
-
     console.log({ time: event.time, date: event.date });
 
     if (!event) {
