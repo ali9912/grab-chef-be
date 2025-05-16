@@ -37,7 +37,7 @@ export class AuthService {
     @InjectModel('Otp') private readonly otpModel: Model<Otp>,
     @InjectModel('User') private readonly userModel: Model<User>,
     @InjectModel('Chef') private readonly chefModel: Model<Chef>,
-  ) { }
+  ) {}
 
   async chefAuth(chefAuthDto: ChefAuthDto) {
     const { phoneNumber } = chefAuthDto;
@@ -48,6 +48,12 @@ export class AuthService {
         phoneNumber,
         role: UserRole.CHEF,
       });
+    }
+    if (user.role !== UserRole.CHEF) {
+      throw new HttpException(
+        'User exists with role of Customer, Please login as a Chef.',
+        HttpStatus.BAD_REQUEST,
+      );
     }
     // Generate and Send the OTP
     const { code, message } = await this.sendOtp(phoneNumber);
@@ -83,7 +89,7 @@ export class AuthService {
 
     // If fcmToken exists, add it to the user's fcmTokens array without duplicates
     if (fcmToken) {
-      await this.addFcmTokenToUser(fcmToken, user._id.toString())
+      await this.addFcmTokenToUser(fcmToken, user._id.toString());
     }
 
     // Delete OTP record
@@ -182,13 +188,19 @@ export class AuthService {
     const userExists = await this.usersService.findByEmail(registerDto.email);
 
     if (userExists) {
-      throw new HttpException('User already exists', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        `User exists with this email, as a ${userExists.role}`,
+        HttpStatus.BAD_REQUEST,
+      );
     }
     // Create user
     const newUser = await this.usersService.createCustomer(registerDto);
 
     if (registerDto.fcmToken) {
-      await this.addFcmTokenToUser(registerDto.fcmToken, newUser._id.toString())
+      await this.addFcmTokenToUser(
+        registerDto.fcmToken,
+        newUser._id.toString(),
+      );
     }
 
     const token = this.generateToken(newUser);
@@ -281,6 +293,13 @@ export class AuthService {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
 
+    if (user.role === UserRole.CHEF) {
+      throw new HttpException(
+        'Restricted, Please continue with the chef flow.',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
     const isMatch = await comparePassword(password, user.password);
 
     if (!isMatch) {
@@ -291,7 +310,7 @@ export class AuthService {
     }
 
     if (fcmToken) {
-      await this.addFcmTokenToUser(fcmToken, user._id.toString())
+      await this.addFcmTokenToUser(fcmToken, user._id.toString());
     }
 
     const token = this.generateToken(user);
@@ -323,7 +342,7 @@ export class AuthService {
         {
           $pull: { fcmTokens: fcmToken }, // Remove the specified fcmToken
         },
-        { new: true }
+        { new: true },
       );
     }
 
@@ -400,7 +419,7 @@ export class AuthService {
         {
           $addToSet: { fcmTokens: fcmToken }, // Add fcmToken only if it doesn't already exist
         },
-        { new: true }
+        { new: true },
       );
     }
   }

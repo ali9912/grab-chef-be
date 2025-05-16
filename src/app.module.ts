@@ -1,18 +1,20 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { AchievementsModule } from './achievements/achievements.module';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
-import { UsersModule } from './users/users.module';
+import { BannersModule } from './banners/banners.module';
 import { ChefModule } from './chef/chef.module';
 import { CustomerModule } from './customer/customer.module';
 import { EventModule } from './event/event.module';
-import { ReviewModule } from './review/review.module';
-import { ThrottlerModule } from '@nestjs/throttler';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { MenuModule } from './menu/menu.module';
-import { AchievementsModule } from './achievements/achievements.module';
-import { BannersModule } from './banners/banners.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { ReviewModule } from './review/review.module';
+import { UsersModule } from './users/users.module';
+import { NotificationsService } from './notifications/notifications.service';
 
 @Module({
   imports: [
@@ -44,9 +46,10 @@ import { BannersModule } from './banners/banners.module';
     MenuModule,
     AchievementsModule,
     BannersModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, NotificationsService],
   exports: [AppService],
 })
 export class AppModule {}

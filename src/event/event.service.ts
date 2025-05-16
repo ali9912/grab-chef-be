@@ -1,27 +1,23 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import {
-  Event,
-  EventStatus,
-  AttendanceStatus,
-  Counter,
-  GetEventQueryType,
-} from './interfaces/event.interface';
+import { AchievementsService } from 'src/achievements/achievements.service';
+import { Chef } from 'src/chef/interfaces/chef.interface';
+import { formatDateToYYYYMMDD } from 'src/helpers/date-formatter';
+import { NotificationsService } from 'src/notifications/notifications.service';
+import { ChefService } from '../chef/chef.service';
+import { User, UserRole } from '../users/interfaces/user.interface';
+import { AddIngredientsDto } from './dto/add-ingredients.dto.ts';
+import { AttendanceDto } from './dto/attendance.dto';
 import { BookingDto } from './dto/booking.dto';
 import { CancelBookingDto, ConfirmBookingDto } from './dto/confirm-booking.dto';
-import { AttendanceDto } from './dto/attendance.dto';
-import { PaginationDto } from '../common/dto/pagination.dto';
-import { ChefService } from '../chef/chef.service';
-import { CustomerService } from '../customer/customer.service';
-import { User, UserRole } from '../users/interfaces/user.interface';
-import { formatDateToYYYYMMDD } from 'src/helpers/date-formatter';
-import { Chef } from 'src/chef/interfaces/chef.interface';
-import { AchievementsService } from 'src/achievements/achievements.service';
 import {
-  AddIngredientsDto,
-  IngredientsDto,
-} from './dto/add-ingredients.dto.ts';
+  AttendanceStatus,
+  Counter,
+  Event,
+  EventStatus,
+  GetEventQueryType,
+} from './interfaces/event.interface';
 
 @Injectable()
 export class EventService {
@@ -32,7 +28,7 @@ export class EventService {
     @InjectModel('Chef') private readonly chefModel: Model<Chef>,
     private readonly chefService: ChefService,
     private readonly achievementService: AchievementsService,
-    private readonly customerService: CustomerService,
+    private readonly notifcationService: NotificationsService,
   ) {}
 
   async createBooking(customerId: string, bookingDto: BookingDto) {
@@ -57,6 +53,16 @@ export class EventService {
       orderId: counter.value, // Assign the incremented value to orderId
     });
 
+    const chefUser = await this.userModel.findById(bookingDto.chefId);
+    if (chefUser) {
+      await this.notifcationService.sendNotificationToMultipleTokens({
+        tokens: chefUser.fcmTokens,
+        title: 'New Event Request',
+        body: 'You have a new event request, Click to see more',
+        token: '',
+      });
+    }
+
     return { message: 'Booking request sent to chef', event };
   }
 
@@ -79,6 +85,7 @@ export class EventService {
     }
 
     const chef = await this.chefService.getChefByUserId(userId);
+    const customer = await this.userModel.findById(event.customer);
 
     // Update event status
     event.status =
@@ -88,6 +95,14 @@ export class EventService {
 
     if (confirmBookingDto.status === 'rejected' && confirmBookingDto.reason) {
       event.rejectionReason = confirmBookingDto.reason;
+      if (customer) {
+        await this.notifcationService.sendNotificationToMultipleTokens({
+          tokens: customer.fcmTokens,
+          title: 'Event request rejected',
+          body: 'Chef has rejected your event request, Click to see details.',
+          token: '',
+        });
+      }
     }
 
     await event.save();
@@ -97,6 +112,14 @@ export class EventService {
         date: formatDateToYYYYMMDD(event.date),
         timeSlots: [event.time],
       });
+      if (customer) {
+        await this.notifcationService.sendNotificationToMultipleTokens({
+          tokens: customer.fcmTokens,
+          title: 'Event request approved',
+          body: 'Congratulations! Chef has approved your event request.',
+          token: '',
+        });
+      }
     }
 
     return { message: 'Booking status updated' };
@@ -126,6 +149,17 @@ export class EventService {
 
     await event.save();
 
+    const chefUser = await this.userModel.findById(event.chef);
+
+    if (chefUser) {
+      await this.notifcationService.sendNotificationToMultipleTokens({
+        tokens: chefUser.fcmTokens,
+        title: 'Event has been cancelled',
+        body: 'Unfortunately, your event has been cancelled, Click to see more.',
+        token: '',
+      });
+    }
+
     return { message: 'Booking Cancelled', success: true };
   }
 
@@ -134,7 +168,10 @@ export class EventService {
     eventId: string,
     cancelBoookingDto: CancelBookingDto,
   ) {
-    const event = await this.eventModel.findById(eventId).exec();
+    const event = await this.eventModel
+      .findById(eventId)
+      .populate('customer')
+      .exec();
     if (!event) {
       throw new HttpException('Event not found', HttpStatus.NOT_FOUND);
     }
@@ -147,11 +184,45 @@ export class EventService {
       );
     }
 
+    const eventDate = new Date(event.date).toISOString().split('T')[0];
+    const chef = await this.chefModel.findOne({ userId });
+    const customerUser = event.customer as unknown as User;
+
+    console.log('===chef.busydays===>', JSON.stringify(chef.busyDays, null, 1));
+
+    let busyDays = chef.busyDays.map((i) => {
+      let item = i;
+      const busyDate = new Date(i.date).toISOString().split('T')[0];
+      if (busyDate === eventDate) {
+        if (i.timeSlots.includes(event.time)) {
+          if (i.timeSlots.length == 1) {
+            item = null;
+            return null;
+          }
+          item.timeSlots = item.timeSlots.filter((u) => u !== event.time);
+        }
+      }
+      return item;
+    });
+
+    chef.busyDays = busyDays.filter((i) => i != null);
+    console.log('===busyDays===>', JSON.stringify(chef.busyDays, null, 1));
+    await chef.save();
+
     // Update event status
     event.status = EventStatus.CANCELLED;
     event.cancelReason = cancelBoookingDto.reason;
 
     await event.save();
+
+    if (customerUser) {
+      await this.notifcationService.sendNotificationToMultipleTokens({
+        tokens: customerUser?.fcmTokens,
+        title: 'Event has been cancelled',
+        body: 'Unfortunately, chef event has been cancelled by Chef, Click to see more.',
+        token: '',
+      });
+    }
 
     return { message: 'Booking Cancelled by chef', success: true };
   }
@@ -211,6 +282,7 @@ export class EventService {
     attendanceDto: AttendanceDto,
   ) {
     const event = await this.eventModel.findById(eventId).exec();
+    const customerUser = await this.userModel.findById(event.customer);
     if (!event) {
       throw new HttpException('Event not found', HttpStatus.NOT_FOUND);
     }
@@ -254,6 +326,21 @@ export class EventService {
     }
 
     await event.save();
+
+    if (customerUser) {
+      await this.notifcationService.sendNotificationToMultipleTokens({
+        tokens: customerUser?.fcmTokens,
+        title:
+          attendanceDto.status === 'attended'
+            ? 'Chef is arrived!'
+            : 'Event has been completed',
+        body:
+          attendanceDto.status === 'attended'
+            ? 'Chef has arrived to your location or marked attendance'
+            : 'Event has been completed, please leave a review.',
+        token: '',
+      });
+    }
 
     return { message };
   }
