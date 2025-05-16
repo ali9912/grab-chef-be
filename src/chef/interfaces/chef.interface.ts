@@ -10,6 +10,7 @@ export enum ChefVerificationStatus {
 }
 
 export type BusyDaysType = {
+  _id?: Types.ObjectId;
   date: Date;
   timeSlots: string[];
 };

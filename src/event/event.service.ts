@@ -173,6 +173,24 @@ export class EventService {
       .populate('customer')
       .exec();
     if (!event) {
+      throw new HttpException(
+        'This event doenst exists.',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    if (event.status === EventStatus.CANCELLED) {
+      throw new HttpException(
+        'Event is already cancelled',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const eventDate = new Date(event.date).toISOString().split('T')[0];
+
+    console.log({ time: event.time, date: event.date });
+
+    if (!event) {
       throw new HttpException('Event not found', HttpStatus.NOT_FOUND);
     }
 
@@ -187,7 +205,8 @@ export class EventService {
     const eventDate = new Date(event.date).toISOString().split('T')[0];
     const chef = await this.chefModel.findOne({ userId });
     const customerUser = event.customer as unknown as User;
-
+      
+      
     console.log('===chef.busydays===>', JSON.stringify(chef.busyDays, null, 1));
 
     let busyDays = chef.busyDays.map((i) => {

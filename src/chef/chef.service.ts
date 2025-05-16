@@ -11,13 +11,15 @@ import {
 } from './interfaces/chef.interface';
 import { MenuItem } from 'src/menu/interfaces/menu.interfaces';
 import { extractChefInfo } from 'src/helpers/extract-data';
-import { BusyDataDto } from './dto/busy-data-dto';
+import { BusyDataDto, RemoveDateDto } from './dto/busy-data-dto';
 import { CreateEmergencyDto } from './dto/-emergency.dto';
+import { Event, EventStatus } from 'src/event/interfaces/event.interface';
 
 @Injectable()
 export class ChefService {
   constructor(
     @InjectModel('Chef') private readonly chefModel: Model<Chef>,
+    @InjectModel('Event') private readonly eventModel: Model<Event>,
     @InjectModel('MenuItem') private readonly menuItemModel: Model<MenuItem>,
     @InjectModel('FavouriteChef')
     private readonly favouriteChefModel: Model<FavouriteChef>,
@@ -57,7 +59,14 @@ export class ChefService {
   }
 
   async getAllChefs(query: GetChefQueryType, customerId?: string) {
-    const { page = 1, limit = 10000, search, status, latitude, longitude } = query;
+    const {
+      page = 1,
+      limit = 10000,
+      search,
+      status,
+      latitude,
+      longitude,
+    } = query;
     const skip = (page - 1) * Number(limit);
 
     // Initialize the aggregation pipeline
@@ -270,6 +279,18 @@ export class ChefService {
         HttpStatus.NOT_FOUND,
       );
     }
+
+    const event = await this.eventModel.findOne({
+      chef: userId,
+      status: EventStatus.CONFIRMED,
+      date: new Date(busyDataDto.date),
+    });
+    if (event) {
+      if (!busyDataDto.timeSlots.includes(event.time)) {
+        // making sure the event time is not missed
+        busyDataDto.timeSlots = [...busyDataDto.timeSlots, event.time];
+      }
+    }
     // Add the new busy day
     const busyDays = await this.addEventToCalendar(chef, busyDataDto);
 
@@ -277,6 +298,74 @@ export class ChefService {
       busyDays,
       success: true,
       message: "Chef's schedule updated successfully.",
+    };
+  }
+
+  async removeEventsToChefCalendar(
+    removeDateDto: RemoveDateDto,
+    userId: string,
+  ) {
+    const removedSlots: string[] = [];
+    const blockedSlots: string[] = [];
+
+    const events = await this.eventModel.find({
+      chef: userId,
+      status: EventStatus.CONFIRMED,
+    });
+
+    const eventsDate = events.map((event) => ({
+      time: event.time,
+      date: new Date(event.date).toISOString().split('T')[0],
+    }));
+
+    const { slots } = removeDateDto;
+    const chef = await this.chefModel.findOne({ userId });
+
+    if (!chef?.busyDays?.length) {
+      return {
+        message: 'Busy slots processed',
+        blockedSlots,
+        removedSlots,
+      };
+    }
+
+    const updatedBusyDays = chef.busyDays.map((busyDay) => {
+      const busyDateStr = new Date(busyDay.date).toISOString().split('T')[0];
+
+      if (busyDateStr !== slots.date) return busyDay;
+
+      const hasEventForDate = eventsDate.filter((e) => e.date === slots.date);
+      let updatedTimeSlots = [...busyDay.timeSlots];
+
+      slots.timeSlots.forEach((slot) => {
+        const isBlocked = hasEventForDate.some((e) => e.time === slot);
+
+        if (updatedTimeSlots.includes(slot) && !isBlocked) {
+          removedSlots.push(slot);
+          updatedTimeSlots = updatedTimeSlots.filter((t) => t !== slot);
+        } else if (updatedTimeSlots.includes(slot)) {
+          blockedSlots.push(slot);
+          console.log(
+            'EVENT EXISTS',
+            hasEventForDate.find((e) => e.time === slot),
+          );
+        }
+      });
+
+      return updatedTimeSlots.length
+        ? { ...busyDay, timeSlots: updatedTimeSlots }
+        : null;
+    });
+
+    chef.busyDays = updatedBusyDays.filter(Boolean); // Remove null entries
+    console.log('===chef.busyDays===>', JSON.stringify(chef.busyDays, null, 1));
+
+    await chef.save();
+
+    return {
+      message: 'Busy slots processed',
+      blockedSlots,
+      removedSlots,
     };
   }
 
@@ -332,21 +421,7 @@ export class ChefService {
     );
 
     if (existingBusyDay) {
-      // Check for overlapping time slots
-      const overlappingSlots = busyDataDto.timeSlots.find((slot) => {
-        return existingBusyDay.timeSlots.includes(slot);
-      });
-
-      if (overlappingSlots) {
-        throw new HttpException(
-          `Time ${overlappingSlots} slots for this date overlap with existing schedule`,
-          HttpStatus.CONFLICT,
-        );
-      }
-
-      // If no overlap, merge the new time slots with the existing ones
-      existingBusyDay.timeSlots.push(...busyDataDto.timeSlots);
-      existingBusyDay.timeSlots = [...new Set(existingBusyDay.timeSlots)]; // Ensure uniqueness
+      existingBusyDay.timeSlots = [...new Set(busyDataDto.timeSlots)]; // Ensure uniqueness
     } else {
       // Add the new busy day
       chef.busyDays.push({ ...busyDataDto, date: new Date(busyDataDto.date) });
