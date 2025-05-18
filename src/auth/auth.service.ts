@@ -293,7 +293,7 @@ export class AuthService {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
 
-    if (user.role === UserRole.CHEF) {
+    if (user && user.role === UserRole.CHEF) {
       throw new HttpException(
         'Restricted, Please continue with the chef flow.',
         HttpStatus.FORBIDDEN,
