@@ -10,11 +10,11 @@ import { NotificationsService } from './notifications.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RequestUser } from 'src/auth/interfaces/request-user.interface';
 
-@Controller()
+@Controller('notifications')
 export class NotificationController {
   constructor(private readonly notificationService: NotificationsService) {}
 
-  @Get('list')
+  @Get()
   @UseGuards(JwtAuthGuard)
   async getMenuList(@Req() req: RequestUser) {
     try {
