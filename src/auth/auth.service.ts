@@ -49,7 +49,7 @@ export class AuthService {
         role: UserRole.CHEF,
       });
     }
-    if (user.role !== UserRole.CHEF) {
+    if (user && user?.role !== UserRole.CHEF) {
       throw new HttpException(
         'User exists with role of Customer, Please login as a Chef.',
         HttpStatus.BAD_REQUEST,
