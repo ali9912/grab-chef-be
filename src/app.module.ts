@@ -49,7 +49,7 @@ import { NotificationsService } from './notifications/notifications.service';
     NotificationsModule,
   ],
   controllers: [AppController],
-  providers: [AppService, NotificationsService],
+  providers: [AppService],
   exports: [AppService],
 })
 export class AppModule {}

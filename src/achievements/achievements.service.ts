@@ -119,6 +119,7 @@ export class AchievementsService {
         await this.notifcationService.sendNotificationToMultipleTokens({
           token: '',
           tokens: user.fcmTokens,
+          userId: user._id.toString(),
           title: `Congratulations! You have won ${acheivement.label} medal.`,
           body: 'Open your app to see the achievement.',
         });

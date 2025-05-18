@@ -1,13 +1,19 @@
 import { Module } from '@nestjs/common';
-import * as admin from 'firebase-admin';
+import { MongooseModule } from '@nestjs/mongoose';
 import { config } from 'dotenv';
+import * as admin from 'firebase-admin';
 import { NotificationController } from './notifications.controller';
 import { NotificationsService } from './notifications.service';
+import { NotificationsSchema } from './schemas/notification.schema';
 
 config();
 
 @Module({
-  imports: [],
+  imports: [
+    MongooseModule.forFeature([
+      { name: 'Notifications', schema: NotificationsSchema },
+    ]),
+  ],
   providers: [NotificationsService],
   controllers: [NotificationController],
   exports: [NotificationsService],

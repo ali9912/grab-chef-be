@@ -4,9 +4,17 @@ import {
   MultipleDeviceNotificationDto,
   NotificationDto,
 } from './dto/notification.dto';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Notifications } from './interfaces/notifications.interface';
 
 @Injectable()
 export class NotificationsService {
+  constructor(
+    @InjectModel('Notifications')
+    private readonly notificationModel: Model<Notifications>,
+  ) {}
+
   async sendNotification({ token, title, body, data, icon }: NotificationDto) {
     try {
       const response = await admin.messaging().send({
@@ -33,6 +41,8 @@ export class NotificationsService {
     title,
     body,
     icon,
+    userId,
+    data,
   }: MultipleDeviceNotificationDto) {
     const message = {
       notification: {
@@ -45,6 +55,7 @@ export class NotificationsService {
 
     try {
       const response = await admin.messaging().sendEachForMulticast(message);
+      await this.notificationModel.create({ user: userId, title, body, data });
       console.log('Successfully sent messages:', response);
       return {
         success: true,
@@ -54,5 +65,10 @@ export class NotificationsService {
       console.log('Error sending messages:', error);
       return { success: false, message: 'Failed to send notifications' };
     }
+  }
+
+  async getUserNotifications(userId: string) {
+    const notifications = await this.notificationModel.find({ user: userId });
+    return { notifications };
   }
 }

@@ -57,6 +57,7 @@ export class EventService {
     if (chefUser) {
       await this.notifcationService.sendNotificationToMultipleTokens({
         tokens: chefUser.fcmTokens,
+        userId: chefUser._id.toString(),
         title: 'New Event Request',
         body: 'You have a new event request, Click to see more',
         token: '',
@@ -99,6 +100,7 @@ export class EventService {
         await this.notifcationService.sendNotificationToMultipleTokens({
           tokens: customer.fcmTokens,
           title: 'Event request rejected',
+          userId: customer._id.toString(),
           body: 'Chef has rejected your event request, Click to see details.',
           token: '',
         });
@@ -115,6 +117,7 @@ export class EventService {
       if (customer) {
         await this.notifcationService.sendNotificationToMultipleTokens({
           tokens: customer.fcmTokens,
+          userId: customer._id.toString(),
           title: 'Event request approved',
           body: 'Congratulations! Chef has approved your event request.',
           token: '',
@@ -154,6 +157,7 @@ export class EventService {
     if (chefUser) {
       await this.notifcationService.sendNotificationToMultipleTokens({
         tokens: chefUser.fcmTokens,
+        userId: chefUser._id.toString(),
         title: 'Event has been cancelled',
         body: 'Unfortunately, your event has been cancelled, Click to see more.',
         token: '',
@@ -203,8 +207,7 @@ export class EventService {
     const eventDate = new Date(event.date).toISOString().split('T')[0];
     const chef = await this.chefModel.findOne({ userId });
     const customerUser = event.customer as unknown as User;
-      
-      
+
     console.log('===chef.busydays===>', JSON.stringify(chef.busyDays, null, 1));
 
     let busyDays = chef.busyDays.map((i) => {
@@ -235,6 +238,7 @@ export class EventService {
     if (customerUser) {
       await this.notifcationService.sendNotificationToMultipleTokens({
         tokens: customerUser?.fcmTokens,
+        userId: customerUser._id.toString(),
         title: 'Event has been cancelled',
         body: 'Unfortunately, chef event has been cancelled by Chef, Click to see more.',
         token: '',
@@ -347,6 +351,7 @@ export class EventService {
     if (customerUser) {
       await this.notifcationService.sendNotificationToMultipleTokens({
         tokens: customerUser?.fcmTokens,
+        userId: customerUser._id.toString(),
         title:
           attendanceDto.status === 'attended'
             ? 'Chef is arrived!'

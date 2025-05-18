@@ -21,4 +21,7 @@ export class NotificationDto {
 export class MultipleDeviceNotificationDto extends NotificationDto {
   @IsArray()
   tokens: string[];
+
+  @IsString()
+  userId: string;
 }
