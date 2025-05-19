@@ -293,12 +293,12 @@ export class AuthService {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
 
-    if (user && user.role === UserRole.CHEF) {
-      throw new HttpException(
-        'Restricted, Please continue with the chef flow.',
-        HttpStatus.FORBIDDEN,
-      );
-    }
+    // if (user && user.role === UserRole.CHEF) {
+    //   throw new HttpException(
+    //     'Restricted, Please continue with the chef flow.',
+    //     HttpStatus.FORBIDDEN,
+    //   );
+    // }
 
     const isMatch = await comparePassword(password, user.password);
 
