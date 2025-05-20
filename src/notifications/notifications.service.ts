@@ -55,8 +55,15 @@ export class NotificationsService {
 
     try {
       const response = await admin.messaging().sendEachForMulticast(message);
-      await this.notificationModel.create({ user: userId, title, body, data });
-      console.log('Successfully sent messages:', response);
+      if (userId) {
+        await this.notificationModel.create({
+          user: userId,
+          title,
+          body,
+          data,
+        });
+      }
+      console.log('Successfully sent messages:', response.responses[0].error);
       return {
         success: true,
         message: `Successfully sent ${response.successCount} messages; ${response.failureCount} failed.`,
