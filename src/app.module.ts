@@ -15,6 +15,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { ReviewModule } from './review/review.module';
 import { UsersModule } from './users/users.module';
 import { NotificationsService } from './notifications/notifications.service';
+import { PaymentsModule } from './payments/payments.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { NotificationsService } from './notifications/notifications.service';
     AchievementsModule,
     BannersModule,
     NotificationsModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
