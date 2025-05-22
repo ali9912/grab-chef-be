@@ -9,6 +9,7 @@ import { CustomerModule } from '../customer/customer.module';
 import { UserSchema } from 'src/users/schemas/user.schema';
 import { ChefSchema } from 'src/chef/schemas/chef.schema';
 import { AchievementsModule } from 'src/achievements/achievements.module';
+import { MenuSchema } from 'src/menu/schemas/menu.schema';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { AchievementsModule } from 'src/achievements/achievements.module';
     MongooseModule.forFeature([{ name: 'Counter', schema: CounterSchema }]),
     MongooseModule.forFeature([{ name: 'User', schema: UserSchema }]),
     MongooseModule.forFeature([{ name: 'Chef', schema: ChefSchema }]),
+    MongooseModule.forFeature([{ name: 'Menu', schema: MenuSchema }]),
     ChefModule,
     CustomerModule,
     AchievementsModule,

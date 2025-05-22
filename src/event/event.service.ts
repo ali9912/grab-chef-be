@@ -17,7 +17,9 @@ import {
   Event,
   EventStatus,
   GetEventQueryType,
+  MenuItem as MenuDTO,
 } from './interfaces/event.interface';
+import { MenuItem } from 'src/menu/interfaces/menu.interfaces';
 
 @Injectable()
 export class EventService {
@@ -26,10 +28,24 @@ export class EventService {
     @InjectModel('Counter') private readonly Counter: Model<Counter>,
     @InjectModel('User') private readonly userModel: Model<User>,
     @InjectModel('Chef') private readonly chefModel: Model<Chef>,
+    @InjectModel('Menu') private readonly menuModel: Model<MenuItem>,
+
     private readonly chefService: ChefService,
     private readonly achievementService: AchievementsService,
     private readonly notifcationService: NotificationsService,
   ) {}
+
+  calculateTotalPrice = async (menus: any[]) => {
+    let total = 0;
+
+    for (const element of menus) {
+      let menuPrice = (await this.menuModel.findById(element.menuItemId)).price;
+      menuPrice = Number(menuPrice);
+      total = total + menuPrice * element.quantity;
+    }
+
+    return total;
+  };
 
   async createBooking(customerId: string, bookingDto: BookingDto) {
     // Create event
@@ -38,8 +54,6 @@ export class EventService {
       { $inc: { value: 1 } }, // Increment the counter
       { new: true, upsert: true }, // Create if it doesn't exist
     );
-
-    console.log('CREATING CUSTOMER', customerId);
 
     const event = await this.eventModel.create({
       customer: customerId,
@@ -50,6 +64,7 @@ export class EventService {
       date: new Date(bookingDto.date),
       time: bookingDto.time,
       status: EventStatus.PENDING,
+      totalAmount: await this.calculateTotalPrice(bookingDto.menuItems),
       orderId: counter.value, // Assign the incremented value to orderId
     });
 
