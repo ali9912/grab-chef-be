@@ -122,6 +122,7 @@ export class AchievementsService {
           userId: user._id.toString(),
           title: `Congratulations! You have won ${acheivement.label} medal.`,
           body: 'Open your app to see the achievement.',
+          data: { type: 'achievement', data: JSON.stringify(acheivement) },
         });
       }
     }

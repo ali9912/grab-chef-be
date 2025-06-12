@@ -5,6 +5,10 @@ export const DataSchema = new mongoose.Schema({
     type: String,
     required: false,
   },
+  data: {
+    type: String,
+    required: false,
+  },
 });
 export const NotificationsSchema = new mongoose.Schema({
   user: {

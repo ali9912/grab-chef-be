@@ -7,5 +7,6 @@ export interface Notifications extends Document {
   createdAt: Date;
   data?: {
     type?: string;
+    data?: string;
   };
 }

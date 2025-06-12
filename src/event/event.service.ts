@@ -76,6 +76,10 @@ export class EventService {
         title: 'New Event Request',
         body: 'You have a new event request, Click to see more',
         token: '',
+        data: {
+          type: 'event-request',
+          data: JSON.stringify(event),
+        },
       });
     }
 
@@ -116,8 +120,12 @@ export class EventService {
           tokens: customer.fcmTokens,
           title: 'Event request rejected',
           userId: customer._id.toString(),
-          body: 'Chef has rejected your event request, Click to see details.',
+          body: 'Chef has rejected your event request',
           token: '',
+          data: {
+            type: 'chef-event-rejected',
+            data: JSON.stringify(event),
+          },
         });
       }
     }
@@ -136,6 +144,10 @@ export class EventService {
           title: 'Event request approved',
           body: 'Congratulations! Chef has approved your event request.',
           token: '',
+          data: {
+            type: 'chef-event-approved',
+            data: JSON.stringify(event),
+          },
         });
       }
     }
@@ -174,8 +186,12 @@ export class EventService {
         tokens: chefUser.fcmTokens,
         userId: chefUser._id.toString(),
         title: 'Event has been cancelled',
-        body: 'Unfortunately, your event has been cancelled, Click to see more.',
+        body: 'Unfortunately, your event has been cancelled',
         token: '',
+        data: {
+          type: 'customer-event-cancelled',
+          data: JSON.stringify(event),
+        },
       });
     }
 
@@ -255,8 +271,12 @@ export class EventService {
         tokens: customerUser?.fcmTokens,
         userId: customerUser._id.toString(),
         title: 'Event has been cancelled',
-        body: 'Unfortunately, chef event has been cancelled by Chef, Click to see more.',
+        body: 'Unfortunately, event has been cancelled by Chef',
         token: '',
+        data: {
+          type: 'chef-event-cancelled',
+          data: JSON.stringify(event),
+        },
       });
     }
 
@@ -376,6 +396,14 @@ export class EventService {
             ? 'Chef has arrived to your location or marked attendance'
             : 'Event has been completed, please leave a review.',
         token: '',
+
+        data: {
+          type:
+            attendanceDto.status === 'attended'
+              ? 'chef-arrived'
+              : 'event-completed',
+          data: JSON.stringify(event),
+        },
       });
     }
 

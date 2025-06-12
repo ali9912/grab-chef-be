@@ -50,6 +50,7 @@ export class NotificationsService {
         body,
         icon,
       },
+      data,
       tokens,
     };
 
