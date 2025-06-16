@@ -16,6 +16,10 @@ export const ReviewSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
+  showInApp: {
+    type: Boolean,
+    default: false
+  },
   rating: {
     type: Number,
     required: true,
