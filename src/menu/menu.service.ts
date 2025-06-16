@@ -121,6 +121,12 @@ export class MenuService {
   async getMenuList(queryData: MenuQueryDto) {
     const { cuisine, experience, rating, location, search } = queryData;
 
+    const locationQuery = location
+      ? Array.isArray(location)
+        ? location
+        : [location]
+      : [];
+
     const matchStage: any = {};
 
     if (cuisine) {
@@ -152,12 +158,12 @@ export class MenuService {
           ...(experience === 'junior' && { 'chefData.experience': { $lt: 5 } }),
           ...(experience === 'senior' && { 'chefData.experience': { $gt: 5 } }),
 
-          ...(location && {
-            'chefData.locations.name': {
-              $regex: location,
-              $options: 'i',
-            },
-          }),
+          ...(location &&
+            Array.isArray(locationQuery) && {
+              $or: locationQuery.map((loc) => ({
+                'chefData.locations.name': { $regex: loc, $options: 'i' },
+              })),
+            }),
         },
       },
 
@@ -178,6 +184,7 @@ export class MenuService {
           _id: 0,
           title: 1,
           description: 1,
+          cuisine: 1,
           price: 1,
           images: 1,
 
@@ -230,6 +237,7 @@ export class MenuService {
           title: 1,
           description: 1,
           price: 1,
+          cuisine: 1,
           images: 1,
 
           'chefDetails.avgRating': 1,

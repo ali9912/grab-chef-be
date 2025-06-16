@@ -149,21 +149,37 @@ export class AuthService {
     // Update Chef Profile
     const chef = await this.chefService.findAndUpdateChefByUserId(userId, body);
 
+    console.log(
+      '===body.locations===>',
+      JSON.stringify(body.locations, null, 1),
+    );
+
     // Handle the locations in the chef's profile
-    if (body.locations) {
-      // If locations are provided, either update existing or add new
-      await this.chefModel.findByIdAndUpdate(
-        chef._id,
-        {
+    if (body.locations?.length) {
+      const existingChef = await this.chefModel.findById(chef._id).lean();
+
+      // Extract existing locations
+      const existingLocations = existingChef.locations || [];
+
+      // Filter new locations that are not duplicates
+      const uniqueLocations = body.locations.filter((newLoc) => {
+        return !existingLocations.some(
+          (existingLoc) =>
+            existingLoc.name === newLoc.name &&
+            existingLoc.key === newLoc.key &&
+            existingLoc.address === newLoc.address &&
+            JSON.stringify(existingLoc.location?.coordinates) ===
+              JSON.stringify(newLoc.location?.coordinates),
+        );
+      });
+
+      if (uniqueLocations.length > 0) {
+        await this.chefModel.findByIdAndUpdate(chef._id, {
           $addToSet: {
-            // Add new locations if they don't already exist
-            locations: {
-              $each: body.locations, // Ensure the new locations are added in the array
-            },
+            locations: { $each: uniqueLocations },
           },
-        },
-        { new: true },
-      );
+        });
+      }
     }
 
     newUser = await this.userModel

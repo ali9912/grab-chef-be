@@ -74,7 +74,7 @@ export class EventService {
         tokens: chefUser.fcmTokens,
         userId: chefUser._id.toString(),
         title: 'New Event Request',
-        body: 'You have a new event request, Click to see more',
+        body: 'You have a new event request',
         token: '',
         data: {
           type: 'event-request',
@@ -461,7 +461,13 @@ export class EventService {
   async getEventById(eventId: string) {
     const event = await this.eventModel
       .findById(eventId)
-      .populate('chef')
+      .populate({
+        path: 'chef',
+        populate: {
+          path: 'chef', // This is the user reference inside the chef schema
+          model: 'Chef', // The model name for users
+        },
+      })
       .populate('customer')
       .populate({
         path: 'menuItems.menuItemId', // Populate menuItemId inside menuItems

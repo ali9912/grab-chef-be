@@ -1,4 +1,11 @@
-import { IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import { CuisineEnum } from '../interfaces/menu.interfaces';
 import { Type } from 'class-transformer';
 
@@ -22,12 +29,9 @@ export class MenuQueryDto {
   @IsOptional()
   @Type(() => Number)
   rating: number;
-  
 
-  @IsString()
   @IsOptional()
-  location: string;
-
+  location: string[];
 
   @IsString()
   @IsOptional()

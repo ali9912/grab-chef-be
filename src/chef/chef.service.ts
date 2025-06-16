@@ -122,6 +122,33 @@ export class ChefService {
       { $unwind: '$user' }, // Unwind the 'user' array after lookup
     );
 
+    pipeline.push(
+      {
+        $lookup: {
+          from: 'events', // change this if your collection has a different name
+          let: { chefId: '$user._id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ['$chef', '$$chefId'] }, // match by chef
+                    { $eq: ['$status', 'completed'] }, // match completed events
+                  ],
+                },
+              },
+            },
+          ],
+          as: 'completedEvents',
+        },
+      },
+      {
+        $addFields: {
+          completedEventsCount: { $size: '$completedEvents' },
+        },
+      },
+    );
+
     // Step 5: If search is present, filter by first or last name (case-insensitive)
     if (search) {
       const regex = new RegExp(search, 'i');
@@ -200,6 +227,7 @@ export class ChefService {
               emergencyContact: 1, // Include emergency contact if needed
               hasAddeddEmergencyContact: 1, // Add if required
               isFavourite: 1,
+              completedEventsCount: 1,
             },
           },
         ],

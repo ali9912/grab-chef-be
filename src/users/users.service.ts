@@ -96,7 +96,7 @@ export class UsersService {
     isVerified: boolean,
   ): Promise<User> {
     return this.userModel
-      .findByIdAndUpdate(userId, { isVerified }, { new: true })
+      .findByIdAndUpdate(userId, { isVerified: true }, { new: true })
       .exec();
   }
 
