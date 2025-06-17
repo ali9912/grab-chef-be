@@ -33,7 +33,7 @@ export class EventService {
     private readonly chefService: ChefService,
     private readonly achievementService: AchievementsService,
     private readonly notifcationService: NotificationsService,
-  ) {}
+  ) { }
 
   calculateTotalPrice = async (menus: any[]) => {
     let total = 0;
@@ -357,11 +357,11 @@ export class EventService {
       markedAt: attendanceDto.markedAt || new Date().toDateString(),
       location: attendanceDto.location
         ? {
-            name: attendanceDto.location.name,
-            location: {
-              coordinates: attendanceDto.location.location.coordinates,
-            },
-          }
+          name: attendanceDto.location.name,
+          location: {
+            coordinates: attendanceDto.location.location.coordinates,
+          },
+        }
         : undefined,
     };
     console.log(event.attendance);
@@ -490,5 +490,10 @@ export class EventService {
   async deleteEventsByCustomerId(customerId: string) {
     await this.eventModel.deleteMany({ customer: customerId });
     return true;
+  }
+
+  async deleteEventById(eventId: string) {
+    await this.eventModel.deleteOne({ _id: eventId });
+    return { success: true, message: "Event deleted successfully." };
   }
 }

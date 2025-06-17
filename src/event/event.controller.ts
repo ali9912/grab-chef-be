@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpException,
   HttpStatus,
@@ -26,7 +27,7 @@ import { GetEventQueryType } from './interfaces/event.interface';
 
 @Controller('event')
 export class EventController {
-  constructor(private readonly eventService: EventService) {}
+  constructor(private readonly eventService: EventService) { }
 
   @Post('create')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -182,6 +183,25 @@ export class EventController {
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to get events',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Delete(':eventId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CUSTOMER)
+  async deleteEvent(
+    @Param('eventId') eventId: string,
+    @Req() req: RequestUser,
+  ) {
+    try {
+      return await this.eventService.deleteEventById(
+        eventId,
+      );
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to delete event',
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
