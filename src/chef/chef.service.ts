@@ -25,7 +25,7 @@ export class ChefService {
     private readonly favouriteChefModel: Model<FavouriteChef>,
     private readonly usersService: UsersService,
     private readonly awsS3Service: AwsS3Service,
-  ) {}
+  ) { }
 
   async getChefByUserId(userId: string) {
     return await this.chefModel.findOne({ userId });
@@ -449,7 +449,7 @@ export class ChefService {
     );
 
     if (existingBusyDay) {
-      existingBusyDay.timeSlots = [...new Set(busyDataDto.timeSlots)]; // Ensure uniqueness
+      existingBusyDay.timeSlots = [...new Set([...existingBusyDay.timeSlots, ...busyDataDto.timeSlots,])]; // Ensure uniqueness
     } else {
       // Add the new busy day
       chef.busyDays.push({ ...busyDataDto, date: new Date(busyDataDto.date) });

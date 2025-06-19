@@ -177,6 +177,30 @@ export class EventService {
     event.status = EventStatus.CANCELLED;
     event.cancelReason = cancelBoookingDto.reason;
 
+    const eventDate = new Date(event.date).toISOString().split('T')[0];
+    const chef = await this.chefModel.findOne({ userId: event.chef.toString() });
+
+    console.log('===chef.busydays===>', JSON.stringify(chef.busyDays, null, 1));
+
+    let busyDays = chef.busyDays.map((i) => {
+      let item = i;
+      const busyDate = new Date(i.date).toISOString().split('T')[0];
+      if (busyDate === eventDate) {
+        if (i.timeSlots.includes(event.time)) {
+          if (i.timeSlots.length == 1) {
+            item = null;
+            return null;
+          }
+          item.timeSlots = item.timeSlots.filter((u) => u !== event.time);
+        }
+      }
+      return item;
+    });
+
+    chef.busyDays = busyDays.filter((i) => i != null);
+    console.log('===busyDays===>', JSON.stringify(chef.busyDays, null, 1));
+    await chef.save();
+
     await event.save();
 
     const chefUser = await this.userModel.findById(event.chef);
