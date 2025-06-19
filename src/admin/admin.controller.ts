@@ -5,7 +5,7 @@ import {
   HttpException,
   HttpStatus,
   Param,
-  Post
+  Post,
 } from '@nestjs/common';
 import { ChefVerificationStatus } from 'src/chef/interfaces/chef.interface';
 import { AdminService } from './admin.service';
@@ -16,7 +16,7 @@ import { AdminRegisterDTO } from './dtos/admin-register-dto';
 // @UseGuards(JwtAuthGuard, RolesGuard)
 // @Roles(UserRole.ADMIN)
 export class AdminController {
-  constructor(private readonly adminService: AdminService) { }
+  constructor(private readonly adminService: AdminService) {}
 
   @Post('login')
   async loginAdmin(@Body() loginAdminDto: AdminLoginDTO) {
@@ -103,9 +103,15 @@ export class AdminController {
   }
 
   @Post('update-chefs-requests/:id')
-  async updateChefStatus(@Param("id") id: string, @Body() chefStatusBody: { status: ChefVerificationStatus }) {
+  async updateChefStatus(
+    @Param('id') id: string,
+    @Body() chefStatusBody: { status: ChefVerificationStatus },
+  ) {
     try {
-      return await this.adminService.updateChefStatus(id, chefStatusBody.status);
+      return await this.adminService.updateChefStatus(
+        id,
+        chefStatusBody.status,
+      );
     } catch (error) {
       throw new HttpException(
         error.message || 'Error getting chefs requests',
@@ -187,9 +193,15 @@ export class AdminController {
   }
 
   @Post('update-review-status/:reviewId')
-  async updateReviewStatus(@Param("reviewId") reviewId: string, @Body() reviewBody: { status: boolean }) {
+  async updateReviewStatus(
+    @Param('reviewId') reviewId: string,
+    @Body() reviewBody: { status: boolean },
+  ) {
     try {
-      return await this.adminService.updateReviewStatus(reviewId, reviewBody.status);
+      return await this.adminService.updateReviewStatus(
+        reviewId,
+        reviewBody.status,
+      );
     } catch (error) {
       throw new HttpException(
         error.message || 'Error getting reviews',
@@ -198,4 +210,47 @@ export class AdminController {
     }
   }
 
+  @Get('get-revenue-stats')
+  async getRevenueStats() {
+    try {
+      return await this.adminService.getRevenueStats();
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Error getting revenue',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('get-event-chef-location')
+  async getEventChefLocation() {
+    try {
+      return await this.adminService.getRevenueStats();
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Error getting revenue',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('repeating-customers')
+  async getRepeatingCustomers() {
+    return this.adminService.getRepeatingCustomers();
+  }
+
+  @Get('get-menu-insights')
+  async getMenuInsights() {
+    return this.adminService.getMenuInsights();
+  }
+
+  @Get('get-trending-chefs')
+  async getTrendingChefsToday() {
+    return this.adminService.getTrendingChefsToday();
+  }
+
+  @Get('repeated-dishes-chef-by-customer/:customerId')
+  async getMostRepeatedByCustomer(@Param('customerId') customerId: string) {
+    return this.adminService.getMostRepeatedByCustomer(customerId);
+  }
 }

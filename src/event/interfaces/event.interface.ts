@@ -43,7 +43,7 @@ export interface Event extends Document {
   time: string;
   status: EventStatus;
   rejectionReason?: string;
-  attendance?: Attendance;
+  attendance?: Attendance[];
   totalAmount: number;
   createdAt: Date;
   updatedAt: Date;

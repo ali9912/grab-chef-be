@@ -88,7 +88,7 @@ export const EventSchema = new mongoose.Schema({
     type: String,
   },
 
-  attendance: AttendanceSchema,
+  attendance: [AttendanceSchema],
 
   totalAmount: {
     type: Number,

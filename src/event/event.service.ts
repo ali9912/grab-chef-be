@@ -376,7 +376,7 @@ export class EventService {
     }
 
     // Update attendance status
-    event.attendance = {
+    event.attendance.push({
       status: attendanceDto.status as AttendanceStatus,
       markedAt: attendanceDto.markedAt || new Date().toDateString(),
       location: attendanceDto.location
@@ -387,7 +387,7 @@ export class EventService {
           },
         }
         : undefined,
-    };
+    });
     console.log(event.attendance);
 
     let message = 'Attendance has been marked.';
