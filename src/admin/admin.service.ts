@@ -212,7 +212,7 @@ export class AdminService {
 
   async updateReviewStatus(reviewId: string, status: boolean) {
     const reviews = await this.reviewModel
-      .findByIdAndUpdate({ showInApp: status })
+      .findByIdAndUpdate(reviewId, { showInApp: status }, { new: true })
       .populate(['event', 'chef', 'customer']);
     return { reviews };
   }
