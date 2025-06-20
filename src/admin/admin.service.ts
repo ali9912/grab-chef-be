@@ -205,7 +205,7 @@ export class AdminService {
 
   async getReviews() {
     const reviews = await this.reviewModel
-      .find({ statusUpdated: false })
+      .find()
       .populate(['event', 'chef', 'customer']);
     return { reviews };
   }
