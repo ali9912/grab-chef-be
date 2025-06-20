@@ -20,6 +20,10 @@ export const ReviewSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  statusUpdated: {
+    type: Boolean,
+    default: false
+  },
   rating: {
     type: Number,
     required: true,

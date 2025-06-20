@@ -7,5 +7,6 @@ export interface Review extends Document {
   rating: number;
   review: string;
   createdAt: Date;
-  showInApp: boolean
+  showInApp: boolean;
+  statusUpdated?: boolean;
 }

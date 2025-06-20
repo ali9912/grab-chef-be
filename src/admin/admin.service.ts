@@ -205,14 +205,18 @@ export class AdminService {
 
   async getReviews() {
     const reviews = await this.reviewModel
-      .find()
+      .find({ statusUpdated: false })
       .populate(['event', 'chef', 'customer']);
     return { reviews };
   }
 
   async updateReviewStatus(reviewId: string, status: boolean) {
     const reviews = await this.reviewModel
-      .findByIdAndUpdate(reviewId, { showInApp: status }, { new: true })
+      .findByIdAndUpdate(
+        reviewId,
+        { showInApp: status, statusUpdated: true },
+        { new: true },
+      )
       .populate(['event', 'chef', 'customer']);
     return { reviews };
   }
