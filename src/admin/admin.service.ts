@@ -123,7 +123,7 @@ export class AdminService {
     if (!chef) {
       throw new HttpException('Chef not found', HttpStatus.NOT_FOUND);
     }
-    await chef.updateOne({ status });
+    await chef.updateOne({ status }, { new: true });
     await chef.save();
     if (status === ChefVerificationStatus.APPROVED) {
       // send notification

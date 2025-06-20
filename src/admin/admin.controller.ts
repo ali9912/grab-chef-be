@@ -222,10 +222,10 @@ export class AdminController {
     }
   }
 
-  @Get('get-event-chef-location')
-  async getEventChefLocation() {
+  @Get('get-event-chef-location:eventId')
+  async getEventChefLocation(@Param('eventId') eventId: string) {
     try {
-      return await this.adminService.getRevenueStats();
+      return await this.adminService.getEventChefLocation(eventId);
     } catch (error) {
       throw new HttpException(
         error.message || 'Error getting revenue',
