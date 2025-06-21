@@ -224,53 +224,79 @@ export class AdminService {
   async getRevenueStats() {
     const now = new Date();
 
-    // Start of today
     const todayStart = new Date(
       now.getFullYear(),
       now.getMonth(),
       now.getDate(),
     );
-
-    // Start of yesterday
     const yesterdayStart = new Date(todayStart);
     yesterdayStart.setDate(todayStart.getDate() - 1);
-
-    // End of yesterday = one millisecond before today
     const yesterdayEnd = new Date(todayStart.getTime() - 1);
 
-    // ===== Aggregate totalAmount for today =====
     const todayResult = await this.eventModel.aggregate([
-      {
-        $match: {
-          createdAt: { $gte: todayStart },
-        },
-      },
-      {
-        $group: {
-          _id: null,
-          total: { $sum: '$totalAmount' },
-        },
-      },
+      { $match: { createdAt: { $gte: todayStart } } },
+      { $group: { _id: null, total: { $sum: '$totalAmount' } } },
     ]);
 
-    // ===== Aggregate totalAmount for yesterday =====
     const yesterdayResult = await this.eventModel.aggregate([
       {
         $match: {
           createdAt: { $gte: yesterdayStart, $lte: yesterdayEnd },
         },
       },
+      { $group: { _id: null, total: { $sum: '$totalAmount' } } },
+    ]);
+
+    const yearStart = new Date(now.getFullYear(), 0, 1);
+    const yearEnd = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
+
+    const monthlyRevenue = await this.eventModel.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: yearStart, $lte: yearEnd },
+        },
+      },
       {
         $group: {
-          _id: null,
+          _id: { month: { $month: '$createdAt' } },
           total: { $sum: '$totalAmount' },
         },
       },
+      {
+        $project: {
+          _id: 0,
+          month: '$_id.month',
+          total: 1,
+        },
+      },
+      { $sort: { month: 1 } },
     ]);
+
+    const monthNames = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+
+    const monthlyRevenueNormalized = Array.from({ length: 12 }, (_, i) => {
+      const monthData = monthlyRevenue.find((m) => m.month === i + 1);
+      return {
+        month: monthNames[i],
+        total: monthData?.total || 0,
+      };
+    });
 
     const todayRevenue = todayResult[0]?.total || 0;
     const yesterdayRevenue = yesterdayResult[0]?.total || 0;
-
     const difference = todayRevenue - yesterdayRevenue;
     const percentageChange =
       yesterdayRevenue === 0
@@ -282,13 +308,14 @@ export class AdminService {
     return {
       todayRevenue,
       yesterdayRevenue,
-      percentageChange: Math.round(percentageChange * 100) / 100, // Rounded to 2 decimals
+      percentageChange: Math.round(percentageChange * 100) / 100,
       trend:
         percentageChange > 0
           ? 'increase'
           : percentageChange < 0
           ? 'decrease'
           : 'no change',
+      monthlyRevenue: monthlyRevenueNormalized,
     };
   }
 
