@@ -9,10 +9,15 @@ export enum ChefVerificationStatus {
   REJECTED = 'rejected',
 }
 
+export type TimeSlotType = {
+  time: string;
+  isEvent: boolean;
+};
+
 export type BusyDaysType = {
   _id?: Types.ObjectId;
   date: Date;
-  timeSlots: string[];
+  timeSlots: TimeSlotType[];
 };
 
 export type EmergencyType = {

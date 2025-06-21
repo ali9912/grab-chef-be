@@ -3,12 +3,17 @@ import { AchievementsSchema } from 'src/achievements/schema/achievements.schema.
 import { ChefVerificationStatus } from '../interfaces/chef.interface';
 import { LocationSchema } from 'src/common/schemas/location.schema';
 
+export const TimeSlotSchema = new mongoose.Schema({
+  time: { type: String, required: true },
+  isEvent: { type: Boolean, default: false },
+});
+
 export const BusyDaysSchema = new mongoose.Schema({
   date: {
     type: Date,
     required: true,
   },
-  timeSlots: [{ type: String, required: true }],
+  timeSlots: [TimeSlotSchema],
 });
 
 export const EmergencySchema = new mongoose.Schema({

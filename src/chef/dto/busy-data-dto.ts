@@ -3,6 +3,7 @@ import {
   IsArray,
   IsDate,
   IsNotEmpty,
+  IsOptional,
   IsString,
   ValidateNested,
 } from 'class-validator';
@@ -13,7 +14,15 @@ export class BusyDataDto {
   date: string;
 
   @IsArray()
-  timeSlots: string[];
+  timeSlots: TimeSlotDto[];
+}
+export class TimeSlotDto {
+  @IsString()
+  @IsNotEmpty()
+  time: string;
+
+  @IsOptional()
+  isEvent: boolean;
 }
 
 export class RemoveDateDto {

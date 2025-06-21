@@ -33,7 +33,7 @@ export class EventService {
     private readonly chefService: ChefService,
     private readonly achievementService: AchievementsService,
     private readonly notifcationService: NotificationsService,
-  ) { }
+  ) {}
 
   calculateTotalPrice = async (menus: any[]) => {
     let total = 0;
@@ -115,6 +115,7 @@ export class EventService {
 
     if (confirmBookingDto.status === 'rejected' && confirmBookingDto.reason) {
       event.rejectionReason = confirmBookingDto.reason;
+
       if (customer) {
         await this.notifcationService.sendNotificationToMultipleTokens({
           tokens: customer.fcmTokens,
@@ -133,10 +134,12 @@ export class EventService {
     await event.save();
 
     if (confirmBookingDto.status !== 'rejected') {
+      // Add event time to chef calendar with isEvent: true
       await this.chefService.addEventToCalendar(chef, {
         date: formatDateToYYYYMMDD(event.date),
-        timeSlots: [event.time],
+        timeSlots: [{ time: event.time, isEvent: true }],
       });
+
       if (customer) {
         await this.notifcationService.sendNotificationToMultipleTokens({
           tokens: customer.fcmTokens,
@@ -165,7 +168,7 @@ export class EventService {
       throw new HttpException('Event not found', HttpStatus.NOT_FOUND);
     }
 
-    // Ensure event belongs to chef
+    // Ensure event belongs to customer
     if (event.customer.toString() !== customerId) {
       throw new HttpException(
         'Event does not belong to customer',
@@ -173,38 +176,40 @@ export class EventService {
       );
     }
 
-    // Update event status
+    // Update event status and reason
     event.status = EventStatus.CANCELLED;
     event.cancelReason = cancelBoookingDto.reason;
 
-    const eventDate = new Date(event.date).toISOString().split('T')[0];
-    const chef = await this.chefModel.findOne({ userId: event.chef.toString() });
+    const eventDateStr = new Date(event.date).toISOString().split('T')[0];
 
-    console.log('===chef.busydays===>', JSON.stringify(chef.busyDays, null, 1));
+    const chef = await this.chefModel.findOne({
+      userId: event.chef.toString(),
+    });
+    if (!chef) {
+      throw new HttpException('Chef not found', HttpStatus.NOT_FOUND);
+    }
 
-    let busyDays = chef.busyDays.map((i) => {
-      let item = i;
-      const busyDate = new Date(i.date).toISOString().split('T')[0];
-      if (busyDate === eventDate) {
-        if (i.timeSlots.includes(event.time)) {
-          if (i.timeSlots.length == 1) {
-            item = null;
-            return null;
-          }
-          item.timeSlots = item.timeSlots.filter((u) => u !== event.time);
-        }
-      }
-      return item;
+    const updatedBusyDays = chef.busyDays.map((busyDay) => {
+      const busyDateStr = new Date(busyDay.date).toISOString().split('T')[0];
+
+      if (busyDateStr !== eventDateStr) return busyDay;
+
+      const updatedTimeSlots = busyDay.timeSlots.filter(
+        (slot) => slot.time !== event.time || slot.isEvent === false,
+      );
+
+      return updatedTimeSlots.length > 0
+        ? { ...busyDay, timeSlots: updatedTimeSlots }
+        : null;
     });
 
-    chef.busyDays = busyDays.filter((i) => i != null);
-    console.log('===busyDays===>', JSON.stringify(chef.busyDays, null, 1));
+    // Remove null (empty date) entries
+    chef.busyDays = updatedBusyDays.filter(Boolean);
     await chef.save();
 
     await event.save();
 
     const chefUser = await this.userModel.findById(event.chef);
-
     if (chefUser) {
       await this.notifcationService.sendNotificationToMultipleTokens({
         tokens: chefUser.fcmTokens,
@@ -231,9 +236,10 @@ export class EventService {
       .findById(eventId)
       .populate('customer')
       .exec();
+
     if (!event) {
       throw new HttpException(
-        'This event doenst exists.',
+        'This event doesn’t exist.',
         HttpStatus.NOT_FOUND,
       );
     }
@@ -245,57 +251,51 @@ export class EventService {
       );
     }
 
-    console.log({ time: event.time, date: event.date });
-
-    if (!event) {
-      throw new HttpException('Event not found', HttpStatus.NOT_FOUND);
-    }
-
-    // Ensure event belongs to chef
+    // Ensure event belongs to the chef
     if (event.chef.toString() !== userId) {
       throw new HttpException(
-        'Event does not belong to customer',
+        'Event does not belong to chef',
         HttpStatus.FORBIDDEN,
       );
     }
 
-    const eventDate = new Date(event.date).toISOString().split('T')[0];
+    const eventDateStr = new Date(event.date).toISOString().split('T')[0];
     const chef = await this.chefModel.findOne({ userId });
     const customerUser = event.customer as unknown as User;
 
-    console.log('===chef.busydays===>', JSON.stringify(chef.busyDays, null, 1));
+    if (!chef) {
+      throw new HttpException('Chef not found', HttpStatus.NOT_FOUND);
+    }
 
-    let busyDays = chef.busyDays.map((i) => {
-      let item = i;
-      const busyDate = new Date(i.date).toISOString().split('T')[0];
-      if (busyDate === eventDate) {
-        if (i.timeSlots.includes(event.time)) {
-          if (i.timeSlots.length == 1) {
-            item = null;
-            return null;
-          }
-          item.timeSlots = item.timeSlots.filter((u) => u !== event.time);
-        }
-      }
-      return item;
+    const updatedBusyDays = chef.busyDays.map((busyDay) => {
+      const busyDateStr = new Date(busyDay.date).toISOString().split('T')[0];
+
+      if (busyDateStr !== eventDateStr) return busyDay;
+
+      const updatedTimeSlots = busyDay.timeSlots.filter(
+        (slot) => slot.time !== event.time || slot.isEvent === false,
+      );
+
+      return updatedTimeSlots.length > 0
+        ? { ...busyDay, timeSlots: updatedTimeSlots }
+        : null;
     });
 
-    chef.busyDays = busyDays.filter((i) => i != null);
-    console.log('===busyDays===>', JSON.stringify(chef.busyDays, null, 1));
+    chef.busyDays = updatedBusyDays.filter(Boolean);
     await chef.save();
 
-    // Update event status
+    // Update event status and reason
     event.status = EventStatus.CANCELLED;
     event.cancelReason = cancelBoookingDto.reason;
-
     await event.save();
 
+    // Notify customer
     if (customerUser) {
       await this.notifcationService.sendNotificationToMultipleTokens({
-        tokens: customerUser?.fcmTokens,
+        tokens: customerUser.fcmTokens,
         userId: customerUser._id.toString(),
         title: 'Event has been cancelled',
-        body: 'Unfortunately, event has been cancelled by Chef',
+        body: 'Unfortunately, your event has been cancelled by the chef.',
         token: '',
         data: {
           type: 'chef-event-cancelled',
@@ -304,7 +304,7 @@ export class EventService {
       });
     }
 
-    return { message: 'Booking Cancelled by chef', success: true };
+    return { message: 'Booking cancelled by chef', success: true };
   }
 
   async addIngredients(
@@ -381,11 +381,11 @@ export class EventService {
       markedAt: attendanceDto.markedAt || new Date().toDateString(),
       location: attendanceDto.location
         ? {
-          name: attendanceDto.location.name,
-          location: {
-            coordinates: attendanceDto.location.location.coordinates,
-          },
-        }
+            name: attendanceDto.location.name,
+            location: {
+              coordinates: attendanceDto.location.location.coordinates,
+            },
+          }
         : undefined,
     });
     console.log(event.attendance);
@@ -518,6 +518,6 @@ export class EventService {
 
   async deleteEventById(eventId: string) {
     await this.eventModel.deleteOne({ _id: eventId });
-    return { success: true, message: "Event deleted successfully." };
+    return { success: true, message: 'Event deleted successfully.' };
   }
 }

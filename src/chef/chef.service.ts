@@ -25,7 +25,7 @@ export class ChefService {
     private readonly favouriteChefModel: Model<FavouriteChef>,
     private readonly usersService: UsersService,
     private readonly awsS3Service: AwsS3Service,
-  ) { }
+  ) {}
 
   async getChefByUserId(userId: string) {
     return await this.chefModel.findOne({ userId });
@@ -313,13 +313,19 @@ export class ChefService {
       status: EventStatus.CONFIRMED,
       date: new Date(busyDataDto.date),
     });
+
     if (event) {
-      if (!busyDataDto.timeSlots.includes(event.time)) {
-        // making sure the event time is not missed
-        busyDataDto.timeSlots = [...busyDataDto.timeSlots, event.time];
+      const alreadyIncluded = busyDataDto.timeSlots.some(
+        (slot) => slot.time === event.time,
+      );
+      if (!alreadyIncluded) {
+        busyDataDto.timeSlots.push({
+          time: event.time,
+          isEvent: true, // mark the event slot
+        });
       }
     }
-    // Add the new busy day
+
     const busyDays = await this.addEventToCalendar(chef, busyDataDto);
 
     return {
@@ -359,23 +365,25 @@ export class ChefService {
 
     const updatedBusyDays = chef.busyDays.map((busyDay) => {
       const busyDateStr = new Date(busyDay.date).toISOString().split('T')[0];
-
       if (busyDateStr !== slots.date) return busyDay;
 
       const hasEventForDate = eventsDate.filter((e) => e.date === slots.date);
       let updatedTimeSlots = [...busyDay.timeSlots];
 
       slots.timeSlots.forEach((slot) => {
-        const isBlocked = hasEventForDate.some((e) => e.time === slot);
+        const isBlocked = hasEventForDate.some((e) => e.time === slot.time);
 
-        if (updatedTimeSlots.includes(slot) && !isBlocked) {
-          removedSlots.push(slot);
-          updatedTimeSlots = updatedTimeSlots.filter((t) => t !== slot);
-        } else if (updatedTimeSlots.includes(slot)) {
-          blockedSlots.push(slot);
+        const exists = updatedTimeSlots.find((t) => t.time === slot.time);
+        if (exists && !isBlocked) {
+          removedSlots.push(slot.time);
+          updatedTimeSlots = updatedTimeSlots.filter(
+            (t) => t.time !== slot.time,
+          );
+        } else if (exists) {
+          blockedSlots.push(slot.time);
           console.log(
             'EVENT EXISTS',
-            hasEventForDate.find((e) => e.time === slot),
+            hasEventForDate.find((e) => e.time === slot.time),
           );
         }
       });
@@ -449,7 +457,9 @@ export class ChefService {
     );
 
     if (existingBusyDay) {
-      existingBusyDay.timeSlots = [...new Set([...existingBusyDay.timeSlots, ...busyDataDto.timeSlots,])]; // Ensure uniqueness
+      existingBusyDay.timeSlots = [
+        ...new Set([...existingBusyDay.timeSlots, ...busyDataDto.timeSlots]),
+      ]; // Ensure uniqueness
     } else {
       // Add the new busy day
       chef.busyDays.push({ ...busyDataDto, date: new Date(busyDataDto.date) });
