@@ -160,20 +160,20 @@ export class AdminService {
   async getEventById(eventId: string) {
     const event = await this.eventModel
       .findById(eventId)
-      .populate([
-        { path: 'customer' },
-        {
-          path: 'chef',
-          populate: { path: 'chef' }, // 👈 nested population inside chef
+      .populate({
+        path: 'chef',
+        populate: {
+          path: 'chef', // This is the user reference inside the chef schema
+          model: 'Chef', // The model name for users
         },
-        {
-          path: 'menuItems.menuItemId', // 👈 nested path in array
-        },
-        {
-          path: 'ingredients',
-        },
-      ])
-      .lean();
+      })
+      .populate('customer')
+      .populate({
+        path: 'menuItems.menuItemId', // Populate menuItemId inside menuItems
+        model: 'Menu', // Reference the MenuItem model
+      })
+      .populate('ingredients')
+      .exec();
     return { event };
   }
 
