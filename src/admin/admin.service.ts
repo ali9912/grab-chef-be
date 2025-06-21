@@ -411,9 +411,9 @@ export class AdminService {
           customerName: {
             $concat: ['$customer.firstName', ' ', '$customer.lastName'],
           },
+          customerProfilePicture: '$customer.profilePicture',
         },
       },
-
       // Unwind repeatBookings to enrich each with chef info
       {
         $unwind: {
@@ -454,6 +454,8 @@ export class AdminService {
         $group: {
           _id: '$_id',
           customerName: { $first: '$customerName' },
+          customerProfilePicture: { $first: '$customerProfilePicture' },
+
           totalBookings: { $first: '$totalBookings' },
           repeatBookings: {
             $push: {
@@ -471,6 +473,7 @@ export class AdminService {
         $project: {
           _id: 0,
           customerName: 1,
+          customerProfilePicture: 1,
           totalBookings: 1,
           repeatBookings: {
             $filter: {
@@ -509,6 +512,8 @@ export class AdminService {
         $group: {
           _id: '$menuItem._id',
           itemName: { $first: '$menuItem.title' },
+          images: { $first: '$menuItem.images' },
+          price: { $first: '$menuItem.price' },
           cuisineStyle: { $first: '$menuItem.cuisine' },
           chefId: { $first: '$menuItem.chef' },
           orders: { $sum: 1 },
@@ -527,6 +532,8 @@ export class AdminService {
         $project: {
           _id: 0,
           itemName: 1,
+          images: 1,
+          price: 1,
           chefName: {
             $concat: ['$chef.firstName', ' ', '$chef.lastName'],
           },
@@ -708,6 +715,152 @@ export class AdminService {
     return {
       mostRepeatedDishes,
       mostRepeatedChefs,
+    };
+  }
+
+  async getAnalyticsData() {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    // 1. Total Menus Created Today
+    const totalMenusToday = await this.menuModel.countDocuments({
+      createdAt: { $gte: todayStart, $lte: todayEnd },
+    });
+
+    // 2. Total Customers Created Today
+    const totalCustomersToday = await this.userModel.countDocuments({
+      createdAt: { $gte: todayStart, $lte: todayEnd },
+      role: 'customer',
+    });
+
+    // 3. Total Chefs Created Today
+    const totalChefsToday = await this.userModel.countDocuments({
+      createdAt: { $gte: todayStart, $lte: todayEnd },
+      role: 'chef',
+    });
+
+    // 4. Total Revenue (All Time)
+    const totalRevenueResult = await this.eventModel.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalRevenue: { $sum: '$totalAmount' },
+        },
+      },
+    ]);
+
+    const totalRevenue = totalRevenueResult[0]?.totalRevenue || 0;
+
+    return {
+      totalMenusToday,
+      totalCustomersToday,
+      totalChefsToday,
+      totalRevenue,
+    };
+  }
+
+  async getSalesStatistics(filter: 'day' | 'week' | 'month' = 'week') {
+    const now = new Date();
+    let groupFormat: string;
+
+    // Set grouping format based on filter
+    switch (filter) {
+      case 'day':
+        groupFormat = '%Y-%m-%d';
+        break;
+      case 'week':
+        groupFormat = '%Y-%U'; // Year and week number
+        break;
+      case 'month':
+      default:
+        groupFormat = '%Y-%m'; // Year-Month format
+        break;
+    }
+
+    // 1. Total Bookings and Revenue grouped by date
+    const bookingsAndRevenue = await this.eventModel.aggregate([
+      {
+        $match: {
+          status: 'confirmed', // Only include confirmed events
+        },
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: groupFormat, date: '$createdAt' },
+          },
+          totalBookings: { $sum: 1 },
+          totalRevenue: { $sum: '$totalAmount' },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+
+    // 2. New Customers grouped by date
+    const newCustomers = await this.userModel.aggregate([
+      {
+        $match: {
+          role: 'customer',
+        },
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: groupFormat, date: '$createdAt' },
+          },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+
+    // 3. Booking frequency per customer
+    const frequencyPerCustomer = await this.eventModel.aggregate([
+      {
+        $group: {
+          _id: '$customer',
+          bookingCount: { $sum: 1 },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          averageFrequency: { $avg: '$bookingCount' },
+        },
+      },
+    ]);
+    const bookingFrequency = frequencyPerCustomer[0]?.averageFrequency || 0;
+
+    // 4. Most ordered cuisines
+    const mostOrderedCuisines = await this.eventModel.aggregate([
+      { $unwind: '$menuItems' },
+      {
+        $lookup: {
+          from: 'menus',
+          localField: 'menuItems.menuItemId',
+          foreignField: '_id',
+          as: 'menuData',
+        },
+      },
+      { $unwind: '$menuData' },
+      {
+        $group: {
+          _id: '$menuData.cuisine',
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { count: -1 } },
+    ]);
+
+    return {
+      period: filter,
+      bookingsAndRevenue, // [{ _id: '2025-06', totalBookings: 14, totalRevenue: 25000 }]
+      newCustomers, // [{ _id: '2025-06', count: 5 }]
+      bookingFrequency: Math.round(bookingFrequency * 100) / 100,
+      mostOrderedCuisines, // [{ _id: 'Pakistani', count: 20 }, ...]
     };
   }
 

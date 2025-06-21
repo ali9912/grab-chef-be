@@ -253,4 +253,16 @@ export class AdminController {
   async getMostRepeatedByCustomer(@Param('customerId') customerId: string) {
     return this.adminService.getMostRepeatedByCustomer(customerId);
   }
+
+  @Get('get-analytics-data')
+  async getAnalyticsData() {
+    return this.adminService.getAnalyticsData();
+  }
+
+  @Get('get-sales-statistics/:filter')
+  async getGraphAnalyticsData(
+    @Param('filter') filter: 'day' | 'week' | 'month',
+  ) {
+    return this.adminService.getSalesStatistics(filter);
+  }
 }
