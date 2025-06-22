@@ -265,4 +265,9 @@ export class AdminController {
   ) {
     return this.adminService.getSalesStatistics(filter);
   }
+
+  @Get('get-chef-revenue/:chefId')
+  async getChefRevenue(@Param('chefId') chefId: string) {
+    return this.adminService.getChefRevenueStats(chefId, 'day');
+  }
 }

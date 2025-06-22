@@ -20,6 +20,8 @@ import { JwtService } from '@nestjs/jwt';
 import { AdminRegisterDTO } from './dtos/admin-register-dto';
 import { comparePassword } from 'src/helpers/password-helper';
 import { Review } from 'src/review/interfaces/review.interface';
+import { format } from 'date-fns';
+import { enUS } from 'date-fns/locale';
 
 @Injectable()
 export class AdminService {
@@ -861,6 +863,74 @@ export class AdminService {
       newCustomers, // [{ _id: '2025-06', count: 5 }]
       bookingFrequency: Math.round(bookingFrequency * 100) / 100,
       mostOrderedCuisines, // [{ _id: 'Pakistani', count: 20 }, ...]
+    };
+  }
+
+  async getChefRevenueStats(
+    chefUserId: string,
+    period: 'day' | 'week' | 'month',
+  ) {
+    const formatMap = {
+      day: '%Y-%m-%d',
+      week: '%Y-%U',
+      month: '%Y-%m-01',
+    };
+
+    const pipeline: any[] = [
+      {
+        $match: {
+          chef: new mongoose.Types.ObjectId(chefUserId),
+          status: 'confirmed',
+        },
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: {
+              format: formatMap[period],
+              date: '$createdAt',
+            },
+          },
+          totalRevenue: { $sum: '$totalAmount' },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { _id: 1 },
+      },
+    ];
+
+    const results = await this.eventModel.aggregate(pipeline);
+
+    const totalRevenue = results.reduce((sum, r) => sum + r.totalRevenue, 0);
+    const totalChefRevenue = totalRevenue * 0.75;
+
+    const graph = results.map((entry) => {
+      let label = entry._id;
+
+      if (period === 'month') {
+        const date = new Date(entry._id);
+        label = format(date, "MMM''yy", { locale: enUS }); // e.g., May'25
+      } else if (period === 'week') {
+        const [year, week] = entry._id.split('-');
+        label = `W${week}'${year.slice(2)}`; // e.g., W23'25
+      } else if (period === 'day') {
+        const date = new Date(entry._id);
+        label = format(date, "dd MMM''yy", { locale: enUS }); // e.g., 15 Jun'25
+      }
+
+      return {
+        label,
+        totalRevenue: entry.totalRevenue,
+        chefRevenue: Math.round(entry.totalRevenue * 0.75 * 100) / 100,
+        bookings: entry.count,
+      };
+    });
+
+    return {
+      totalRevenue,
+      chefRevenue: Math.round(totalChefRevenue * 100) / 100,
+      graph,
     };
   }
 
