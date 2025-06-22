@@ -222,7 +222,7 @@ export class AdminController {
     }
   }
 
-  @Get('get-event-chef-location:eventId')
+  @Get('get-event-chef-location/:eventId')
   async getEventChefLocation(@Param('eventId') eventId: string) {
     try {
       return await this.adminService.getEventChefLocation(eventId);
