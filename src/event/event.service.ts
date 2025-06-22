@@ -517,7 +517,7 @@ export class EventService {
   }
 
   async deleteEventById(eventId: string) {
-    await this.eventModel.deleteOne({ _id: eventId });
+    await this.eventModel.findByIdAndDelete(eventId);
     return { success: true, message: 'Event deleted successfully.' };
   }
 }
