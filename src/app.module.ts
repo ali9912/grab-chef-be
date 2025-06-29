@@ -17,6 +17,8 @@ import { UsersModule } from './users/users.module';
 import { NotificationsService } from './notifications/notifications.service';
 import { PaymentsModule } from './payments/payments.module';
 import { AdminModule } from './admin/admin.module';
+import { ChatModule } from './chat/chat.module';
+import { UtilsModule } from './utils/utils.module';
 
 @Module({
   imports: [
@@ -51,6 +53,8 @@ import { AdminModule } from './admin/admin.module';
     NotificationsModule,
     PaymentsModule,
     AdminModule,
+    ChatModule,
+    UtilsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
