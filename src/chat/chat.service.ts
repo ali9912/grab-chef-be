@@ -4,11 +4,13 @@ import { Model } from 'mongoose';
 import { Message } from './interfaces/message.interface';
 import { SendMessageDto, AttachFileDto } from './dto/message.dto';
 import * as mongoose from 'mongoose';
+import { ChatGateway } from './chat.gateway';
 
 @Injectable()
 export class ChatService {
   constructor(
     @InjectModel('Message') private readonly messageModel: Model<Message>,
+    private readonly chatGateway: ChatGateway,
   ) {}
 
   async sendMessage(senderId: string, sendMessageDto: SendMessageDto) {
@@ -18,7 +20,15 @@ export class ChatService {
       receiver,
       body,
     });
-    return await message.save();
+    const savedMessage = await message.save();
+
+    // Emit real-time updates
+    this.chatGateway.server.to(senderId).emit('chatHistoryUpdate', savedMessage);
+    this.chatGateway.server.to(receiver).emit('chatHistoryUpdate', savedMessage);
+    this.chatGateway.server.to(senderId).emit('myChatsUpdate');
+    this.chatGateway.server.to(receiver).emit('myChatsUpdate');
+
+    return savedMessage;
   }
 
   async getChatHistory(userId: string, otherUserId: string) {
@@ -103,6 +113,14 @@ export class ChatService {
       fileName,
       fileType,
     });
-    return await message.save();
+    const savedMessage = await message.save();
+
+    // Emit real-time updates
+    this.chatGateway.server.to(senderId).emit('chatHistoryUpdate', savedMessage);
+    this.chatGateway.server.to(receiver).emit('chatHistoryUpdate', savedMessage);
+    this.chatGateway.server.to(senderId).emit('myChatsUpdate');
+    this.chatGateway.server.to(receiver).emit('myChatsUpdate');
+
+    return savedMessage;
   }
 } 
