@@ -450,22 +450,53 @@ export class ChefService {
   }
 
   async addEventToCalendar(chef: Chef, busyDataDto: BusyDataDto) {
-    // Check if the date already exists in the busyDays array
+    const eventDateISO = new Date(busyDataDto.date).toISOString();
+
     const existingBusyDay = chef.busyDays.find(
-      (day) =>
-        day.date.toISOString() === new Date(busyDataDto.date).toISOString(),
+      (day) => day.date.toISOString() === eventDateISO,
     );
 
     if (existingBusyDay) {
-      existingBusyDay.timeSlots = [
-        ...new Set([...existingBusyDay.timeSlots, ...busyDataDto.timeSlots]),
-      ]; // Ensure uniqueness
-    } else {
-      // Add the new busy day
-      chef.busyDays.push({ ...busyDataDto, date: new Date(busyDataDto.date) });
-      if (chef.locations.length === 0) {
-        chef.locations = [];
+      for (const newSlot of busyDataDto.timeSlots) {
+        const existingSlot = existingBusyDay.timeSlots.find(
+          (slot) => slot.time === newSlot.time,
+        );
+
+        if (existingSlot) {
+          if (existingSlot.isEvent && newSlot.isEvent) {
+            throw new Error(`Event already exists for time ${newSlot.time}`);
+          }
+
+          if (newSlot.isEvent) {
+            existingSlot.isEvent = true;
+          }
+          // If not an event, no update needed
+        } else {
+          // Add new slot
+          existingBusyDay.timeSlots.push({
+            time: newSlot.time,
+            isEvent: newSlot.isEvent ?? false,
+          });
+        }
       }
+
+      // Enforce uniqueness by time (if needed again for safety)
+      const slotMap: Record<string, { time: string; isEvent: boolean }> = {};
+      for (const slot of existingBusyDay.timeSlots) {
+        slotMap[slot.time] = slot; // overwrites duplicates
+      }
+      existingBusyDay.timeSlots = Object.values(slotMap);
+    } else {
+      // Create new day entry
+      const newDay = {
+        date: new Date(busyDataDto.date),
+        timeSlots: busyDataDto.timeSlots.map((slot) => ({
+          time: slot.time,
+          isEvent: slot.isEvent ?? false,
+        })),
+      };
+
+      chef.busyDays.push(newDay);
     }
 
     await chef.save();
