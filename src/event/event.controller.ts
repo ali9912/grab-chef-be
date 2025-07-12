@@ -7,18 +7,17 @@ import {
   HttpStatus,
   Param,
   Post,
+  Put,
   Query,
   Req,
-  UseGuards
+  UseGuards,
 } from '@nestjs/common';
 import { RequestUser } from 'src/auth/interfaces/request-user.interface';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { UserRole } from '../users/interfaces/user.interface';
-import {
-  AddIngredientsDto
-} from './dto/add-ingredients.dto.ts';
+import { AddIngredientsDto } from './dto/add-ingredients.dto.ts';
 import { AttendanceDto } from './dto/attendance.dto';
 import { BookingDto } from './dto/booking.dto';
 import { CancelBookingDto, ConfirmBookingDto } from './dto/confirm-booking.dto';
@@ -27,7 +26,7 @@ import { GetEventQueryType } from './interfaces/event.interface';
 
 @Controller('event')
 export class EventController {
-  constructor(private readonly eventService: EventService) { }
+  constructor(private readonly eventService: EventService) {}
 
   @Post('create')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -168,6 +167,25 @@ export class EventController {
     }
   }
 
+  @Put('complete/:eventId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  async completeEvent(
+    @Param('eventId') eventId: string,
+    @Req() req: RequestUser,
+  ) {
+    try {
+      return await this.eventService.completeEvent(
+        req.user._id.toString(),
+        eventId,
+      );
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to Complete event',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   @Get('list')
   @UseGuards(JwtAuthGuard)
   async getEvents(
@@ -196,9 +214,7 @@ export class EventController {
     @Req() req: RequestUser,
   ) {
     try {
-      return await this.eventService.deleteEventById(
-        eventId,
-      );
+      return await this.eventService.deleteEventById(eventId);
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to delete event',

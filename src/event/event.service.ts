@@ -392,18 +392,18 @@ export class EventService {
 
     let message = 'Attendance has been marked.';
 
-    if (attendanceDto.status === 'checkout') {
-      event.status = EventStatus.COMPLETED;
-      message = 'Chef has checout successfully.';
-      const chefUser = await this.chefModel.findOne({ userId: chefId });
-      if (chefUser) {
-        const totalCompletedOrders = chefUser.completedOrders + 1;
-        chefUser.completedOrders = totalCompletedOrders;
-      }
-      await chefUser.save();
-      // check for the acheivements by the chef
-      await this.achievementService.checkForAchievements(chefId);
-    }
+    // if (attendanceDto.status === 'checkout') {
+    //   event.status = EventStatus.COMPLETED;
+    //   message = 'Chef has checkout successfully.';
+    //   const chefUser = await this.chefModel.findOne({ userId: chefId });
+    //   if (chefUser) {
+    //     const totalCompletedOrders = chefUser.completedOrders + 1;
+    //     chefUser.completedOrders = totalCompletedOrders;
+    //   }
+    //   await chefUser.save();
+    //   // check for the acheivements by the chef
+    //   await this.achievementService.checkForAchievements(chefId);
+    // }
 
     await event.save();
 
@@ -414,24 +414,45 @@ export class EventService {
         title:
           attendanceDto.status === 'attended'
             ? 'Chef is arrived!'
-            : 'Event has been completed',
+            : 'Event has checkedout',
         body:
           attendanceDto.status === 'attended'
             ? 'Chef has arrived to your location or marked attendance'
-            : 'Event has been completed, please leave a review.',
+            : 'Chef has exited or completed the event',
         token: '',
 
         data: {
           type:
             attendanceDto.status === 'attended'
               ? 'chef-arrived'
-              : 'event-completed',
+              : 'chef-checkout',
           data: JSON.stringify(event),
         },
       });
     }
 
     return { message };
+  }
+
+  async completeEvent(chefId: string, eventId: string) {
+    console.log('===eventId===>', eventId);
+    const event = await this.eventModel.findById(eventId).exec();
+    if (!event) {
+      throw new HttpException('Event not found', HttpStatus.NOT_FOUND);
+    }
+    event.status = EventStatus.COMPLETED;
+    const chefUser = await this.chefModel.findOne({ userId: event.chef });
+    if (chefUser) {
+      const totalCompletedOrders = chefUser.completedOrders + 1;
+      chefUser.completedOrders = totalCompletedOrders;
+    }
+    await chefUser.save();
+    // check for the acheivements by the chef
+    await this.achievementService.checkForAchievements(chefId);
+
+    await event.save();
+
+    return { message: 'Event has been completed', success: true, event };
   }
 
   async getEvents(
