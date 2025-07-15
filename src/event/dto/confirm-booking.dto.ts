@@ -4,6 +4,7 @@ enum BookingStatus {
   CONFIRMED = 'confirmed',
   REJECTED = 'rejected',
   CANCELLED = 'cancelled',
+  ACCEPTED = 'accepted',
 }
 
 export class ConfirmBookingDto {
@@ -25,4 +26,10 @@ export class CancelBookingDto {
   @IsString()
   @IsNotEmpty({ message: 'Reason is required when status is REJECTED' })
   reason?: string;
+}
+
+export class AcceptBookingDto {
+  @IsEnum(BookingStatus)
+  @IsNotEmpty()
+  status: BookingStatus.ACCEPTED;
 }

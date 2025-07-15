@@ -104,6 +104,11 @@ export class EventService {
       );
     }
 
+    // Only allow confirm if event is ACCEPTED
+    if (event.status !== EventStatus.ACCEPTED) {
+      throw new HttpException('Event must be accepted before confirmation', HttpStatus.BAD_REQUEST);
+    }
+
     const chef = await this.chefService.getChefByUserId(userId);
     const customer = await this.userModel.findById(event.customer);
 
@@ -540,5 +545,44 @@ export class EventService {
   async deleteEventById(eventId: string) {
     await this.eventModel.findByIdAndDelete(eventId);
     return { success: true, message: 'Event deleted successfully.' };
+  }
+
+  async acceptBooking(
+    userId: string,
+    eventId: string,
+    acceptBookingDto: { status: string },
+  ) {
+    const event = await this.eventModel.findById(eventId).exec();
+    if (!event) {
+      throw new HttpException('Event not found', HttpStatus.NOT_FOUND);
+    }
+    // Ensure event belongs to chef
+    if (event.chef.toString() !== userId) {
+      throw new HttpException('Event does not belong to chef', HttpStatus.FORBIDDEN);
+    }
+    if (event.status !== EventStatus.PENDING) {
+      throw new HttpException('Only pending events can be accepted', HttpStatus.BAD_REQUEST);
+    }
+    if (acceptBookingDto.status !== EventStatus.ACCEPTED) {
+      throw new HttpException('Invalid status for accept', HttpStatus.BAD_REQUEST);
+    }
+    event.status = EventStatus.ACCEPTED;
+    await event.save();
+    // Notify customer
+    const customer = await this.userModel.findById(event.customer);
+    if (customer) {
+      await this.notifcationService.sendNotificationToMultipleTokens({
+        tokens: customer.fcmTokens,
+        userId: customer._id.toString(),
+        title: 'Event request accepted',
+        body: 'Chef has accepted your event request.',
+        token: '',
+        data: {
+          type: 'chef-event-accepted',
+          data: JSON.stringify(event),
+        },
+      });
+    }
+    return { message: 'Booking accepted' };
   }
 }

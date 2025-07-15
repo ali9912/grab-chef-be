@@ -5,6 +5,7 @@ import { LocationType } from 'src/common/interfaces/location.interface';
 
 export enum EventStatus {
   PENDING = 'pending',
+  ACCEPTED = 'accepted',
   CONFIRMED = 'confirmed',
   REJECTED = 'rejected',
   CANCELLED = 'cancelled',
