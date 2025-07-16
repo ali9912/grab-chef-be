@@ -48,6 +48,31 @@ export class EventService {
   };
 
   async createBooking(customerId: string, bookingDto: BookingDto) {
+    // Check slot availability
+    const chef = await this.chefModel.findOne({ userId: bookingDto.chefId });
+    if (!chef) {
+      throw new HttpException('Chef not found', HttpStatus.NOT_FOUND);
+    }
+    const busyDay = chef.busyDays.find(
+      (d) => new Date(d.date).toISOString().split('T')[0] === new Date(bookingDto.date).toISOString().split('T')[0]
+    );
+    if (!busyDay) {
+      throw new HttpException('Selected date is not available for this chef', HttpStatus.BAD_REQUEST);
+    }
+    const slot = busyDay.timeSlots.find((s) => s.time === bookingDto.time);
+    if (!slot) {
+      throw new HttpException('Selected time slot is not available for this chef', HttpStatus.BAD_REQUEST);
+    }
+    // Check if slot is already booked by a confirmed event
+    const confirmedEvent = await this.eventModel.findOne({
+      chef: bookingDto.chefId,
+      date: new Date(bookingDto.date),
+      time: bookingDto.time,
+      status: EventStatus.CONFIRMED,
+    });
+    if (slot.isEvent || confirmedEvent) {
+      throw new HttpException('Selected time slot is already booked', HttpStatus.BAD_REQUEST);
+    }
     // Create event
     const counter = await this.Counter.findOneAndUpdate(
       { name: 'eventOrderId' }, // Counter name
