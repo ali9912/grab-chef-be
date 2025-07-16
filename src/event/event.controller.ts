@@ -20,7 +20,7 @@ import { UserRole } from '../users/interfaces/user.interface';
 import { AddIngredientsDto } from './dto/add-ingredients.dto.ts';
 import { AttendanceDto } from './dto/attendance.dto';
 import { BookingDto } from './dto/booking.dto';
-import { CancelBookingDto, ConfirmBookingDto } from './dto/confirm-booking.dto';
+import { CancelBookingDto, ConfirmBookingDto, AcceptBookingDto } from './dto/confirm-booking.dto';
 import { EventService } from './event.service';
 import { GetEventQueryType } from './interfaces/event.interface';
 
@@ -127,6 +127,28 @@ export class EventController {
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to confirm booking',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post(':eventId/accept')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CHEF)
+  async acceptBooking(
+    @Param('eventId') eventId: string,
+    @Body() acceptBookingDto: AcceptBookingDto,
+    @Req() req: RequestUser,
+  ) {
+    try {
+      return await this.eventService.acceptBooking(
+        req.user._id.toString(),
+        eventId,
+        acceptBookingDto,
+      );
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to accept booking',
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

@@ -283,7 +283,24 @@ export class ChefService {
         HttpStatus.NOT_FOUND,
       );
     }
-    const busyDays = chef.busyDays;
+    // Get all confirmed events for this chef
+    const confirmedEvents = await this.eventModel.find({
+      chef: userId,
+      status: EventStatus.CONFIRMED,
+    });
+    // Mark isEvent: true for slots with a confirmed event
+    const busyDays = chef.busyDays.map((busyDay) => {
+      const dateStr = new Date(busyDay.date).toISOString().split('T')[0];
+      const updatedTimeSlots = busyDay.timeSlots.map((slot) => {
+        const hasConfirmed = confirmedEvents.some(
+          (event) =>
+            new Date(event.date).toISOString().split('T')[0] === dateStr &&
+            event.time === slot.time
+        );
+        return { ...slot, isEvent: hasConfirmed ? true : slot.isEvent };
+      });
+      return { ...busyDay, timeSlots: updatedTimeSlots };
+    });
     return { busyDays, success: true };
   }
 
@@ -295,7 +312,24 @@ export class ChefService {
         HttpStatus.NOT_FOUND,
       );
     }
-    const busyDays = chef.busyDays;
+    // Get all confirmed events for this chef
+    const confirmedEvents = await this.eventModel.find({
+      chef: userId,
+      status: EventStatus.CONFIRMED,
+    });
+    // Mark isEvent: true for slots with a confirmed event
+    const busyDays = chef.busyDays.map((busyDay) => {
+      const dateStr = new Date(busyDay.date).toISOString().split('T')[0];
+      const updatedTimeSlots = busyDay.timeSlots.map((slot) => {
+        const hasConfirmed = confirmedEvents.some(
+          (event) =>
+            new Date(event.date).toISOString().split('T')[0] === dateStr &&
+            event.time === slot.time
+        );
+        return { ...slot, isEvent: hasConfirmed ? true : slot.isEvent };
+      });
+      return { ...busyDay, timeSlots: updatedTimeSlots };
+    });
     return { busyDays, success: true };
   }
 

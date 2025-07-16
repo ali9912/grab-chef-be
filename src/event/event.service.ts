@@ -48,6 +48,31 @@ export class EventService {
   };
 
   async createBooking(customerId: string, bookingDto: BookingDto) {
+    // Check slot availability
+    const chef = await this.chefModel.findOne({ userId: bookingDto.chefId });
+    if (!chef) {
+      throw new HttpException('Chef not found', HttpStatus.NOT_FOUND);
+    }
+    const busyDay = chef.busyDays.find(
+      (d) => new Date(d.date).toISOString().split('T')[0] === new Date(bookingDto.date).toISOString().split('T')[0]
+    );
+    if (!busyDay) {
+      throw new HttpException('Selected date is not available for this chef', HttpStatus.BAD_REQUEST);
+    }
+    const slot = busyDay.timeSlots.find((s) => s.time === bookingDto.time);
+    if (!slot) {
+      throw new HttpException('Selected time slot is not available for this chef', HttpStatus.BAD_REQUEST);
+    }
+    // Check if slot is already booked by a confirmed event
+    const confirmedEvent = await this.eventModel.findOne({
+      chef: bookingDto.chefId,
+      date: new Date(bookingDto.date),
+      time: bookingDto.time,
+      status: EventStatus.CONFIRMED,
+    });
+    if (slot.isEvent || confirmedEvent) {
+      throw new HttpException('Selected time slot is already booked', HttpStatus.BAD_REQUEST);
+    }
     // Create event
     const counter = await this.Counter.findOneAndUpdate(
       { name: 'eventOrderId' }, // Counter name
@@ -102,6 +127,11 @@ export class EventService {
         'Event does not belong to chef',
         HttpStatus.FORBIDDEN,
       );
+    }
+
+    // Only allow confirm if event is ACCEPTED
+    if (event.status !== EventStatus.ACCEPTED) {
+      throw new HttpException('Event must be accepted before confirmation', HttpStatus.BAD_REQUEST);
     }
 
     const chef = await this.chefService.getChefByUserId(userId);
@@ -540,5 +570,44 @@ export class EventService {
   async deleteEventById(eventId: string) {
     await this.eventModel.findByIdAndDelete(eventId);
     return { success: true, message: 'Event deleted successfully.' };
+  }
+
+  async acceptBooking(
+    userId: string,
+    eventId: string,
+    acceptBookingDto: { status: string },
+  ) {
+    const event = await this.eventModel.findById(eventId).exec();
+    if (!event) {
+      throw new HttpException('Event not found', HttpStatus.NOT_FOUND);
+    }
+    // Ensure event belongs to chef
+    if (event.chef.toString() !== userId) {
+      throw new HttpException('Event does not belong to chef', HttpStatus.FORBIDDEN);
+    }
+    if (event.status !== EventStatus.PENDING) {
+      throw new HttpException('Only pending events can be accepted', HttpStatus.BAD_REQUEST);
+    }
+    if (acceptBookingDto.status !== EventStatus.ACCEPTED) {
+      throw new HttpException('Invalid status for accept', HttpStatus.BAD_REQUEST);
+    }
+    event.status = EventStatus.ACCEPTED;
+    await event.save();
+    // Notify customer
+    const customer = await this.userModel.findById(event.customer);
+    if (customer) {
+      await this.notifcationService.sendNotificationToMultipleTokens({
+        tokens: customer.fcmTokens,
+        userId: customer._id.toString(),
+        title: 'Event request accepted',
+        body: 'Chef has accepted your event request.',
+        token: '',
+        data: {
+          type: 'chef-event-accepted',
+          data: JSON.stringify(event),
+        },
+      });
+    }
+    return { message: 'Booking accepted' };
   }
 }
