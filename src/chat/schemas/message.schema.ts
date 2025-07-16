@@ -6,6 +6,7 @@ export const MessageSchema = new mongoose.Schema({
   body: { type: String, required: false },
   createdAt: { type: Date, default: Date.now },
   read: { type: Boolean, default: false },
+  eventId: { type: mongoose.Schema.Types.ObjectId, ref: 'Event', required: true },
   // File attachment fields
   fileUrl: { type: String, required: false },
   fileName: { type: String, required: false },

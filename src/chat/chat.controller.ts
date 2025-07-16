@@ -22,9 +22,9 @@ export class ChatController {
   }
 
   @Get('history')
-  async getChatHistory(@Req() req: RequestUser, @Query('userId') userId: string) {
+  async getChatHistory(@Req() req: RequestUser, @Query('userId') userId: string, @Query('eventId') eventId: string) {
     const currentUserId = req.user._id.toString();
-    return this.chatService.getChatHistory(currentUserId, userId);
+    return this.chatService.getChatHistory(currentUserId, userId, eventId);
   }
 
   @Get('my-chats')

@@ -16,6 +16,14 @@ export class ConfirmBookingDto {
   @IsString()
   @IsNotEmpty({ message: 'Reason is required when status is REJECTED' })
   reason?: string;
+
+  @IsString()
+  @IsOptional()
+  date?: string;
+
+  @IsString()
+  @IsOptional()
+  time?: string;
 }
 
 export class CancelBookingDto {

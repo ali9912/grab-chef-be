@@ -14,11 +14,12 @@ export class ChatService {
   ) {}
 
   async sendMessage(senderId: string, sendMessageDto: SendMessageDto) {
-    const { receiver, body } = sendMessageDto;
+    const { receiver, body, eventId } = sendMessageDto;
     const message = new this.messageModel({
       sender: senderId,
       receiver,
       body,
+      eventId,
     });
     const savedMessage = await message.save();
 
@@ -31,8 +32,9 @@ export class ChatService {
     return savedMessage;
   }
 
-  async getChatHistory(userId: string, otherUserId: string) {
+  async getChatHistory(userId: string, otherUserId: string, eventId: string) {
     return this.messageModel.find({
+      eventId,
       $or: [
         { sender: userId, receiver: otherUserId },
         { sender: otherUserId, receiver: userId },
@@ -41,6 +43,7 @@ export class ChatService {
   }
 
   async listMyChats(userId: string) {
+    // Group by eventId and chat partner
     const messages = await this.messageModel.aggregate([
       {
         $match: {
@@ -58,6 +61,7 @@ export class ChatService {
           body: 1,
           createdAt: 1,
           read: 1,
+          eventId: 1,
           chatPartner: {
             $cond: [
               { $eq: ["$sender", new mongoose.Types.ObjectId(userId)] },
@@ -69,14 +73,14 @@ export class ChatService {
       },
       {
         $group: {
-          _id: "$chatPartner",
+          _id: { eventId: "$eventId", chatPartner: "$chatPartner" },
           lastMessage: { $first: "$$ROOT" }
         }
       },
       {
         $lookup: {
           from: "users",
-          localField: "_id",
+          localField: "_id.chatPartner",
           foreignField: "_id",
           as: "user"
         }
@@ -92,6 +96,7 @@ export class ChatService {
             profilePicture: 1,
             role: 1
           },
+          eventId: "$_id.eventId",
           lastMessage: 1
         }
       }
@@ -100,7 +105,7 @@ export class ChatService {
   }
 
   async attachFile(senderId: string, attachFileDto: AttachFileDto) {
-    const { receiver, fileUrl } = attachFileDto;
+    const { receiver, fileUrl, eventId } = attachFileDto;
     let fileName, fileType;
     if (fileUrl) {
       fileName = fileUrl.split('/').pop();
@@ -112,6 +117,7 @@ export class ChatService {
       fileUrl,
       fileName,
       fileType,
+      eventId,
     });
     const savedMessage = await message.save();
 

@@ -134,6 +134,39 @@ export class EventService {
       throw new HttpException('Event must be accepted before confirmation', HttpStatus.BAD_REQUEST);
     }
 
+    // If date or time is being updated, check slot availability
+    if (confirmBookingDto.date || confirmBookingDto.time) {
+      const newDate = confirmBookingDto.date ? new Date(confirmBookingDto.date) : event.date;
+      const newTime = confirmBookingDto.time ? confirmBookingDto.time : event.time;
+      // Check if slot is available in chef's busyDays
+      const chefDoc = await this.chefModel.findOne({ userId });
+      if (!chefDoc) {
+        throw new HttpException('Chef not found', HttpStatus.NOT_FOUND);
+      }
+      const busyDay = chefDoc.busyDays.find(
+        (d) => new Date(d.date).toISOString().split('T')[0] === newDate.toISOString().split('T')[0]
+      );
+      if (!busyDay) {
+        throw new HttpException('Selected date is not available for this chef', HttpStatus.BAD_REQUEST);
+      }
+      const slot = busyDay.timeSlots.find((s) => s.time === newTime);
+      if (!slot) {
+        throw new HttpException('Selected time slot is not available for this chef', HttpStatus.BAD_REQUEST);
+      }
+      // Check if slot is already booked by a confirmed event
+      const confirmedEvent = await this.eventModel.findOne({
+        chef: userId,
+        date: newDate,
+        time: newTime,
+        status: EventStatus.CONFIRMED,
+      });
+      if (slot.isEvent || confirmedEvent) {
+        throw new HttpException('Selected time slot is already booked', HttpStatus.BAD_REQUEST);
+      }
+      event.date = newDate;
+      event.time = newTime;
+    }
+
     const chef = await this.chefService.getChefByUserId(userId);
     const customer = await this.userModel.findById(event.customer);
 
