@@ -20,6 +20,7 @@ import {
   MenuItem as MenuDTO,
 } from './interfaces/event.interface';
 import { MenuItem } from 'src/menu/interfaces/menu.interfaces';
+import { PaymentsService } from '../payments/payments.service';
 
 @Injectable()
 export class EventService {
@@ -33,6 +34,7 @@ export class EventService {
     private readonly chefService: ChefService,
     private readonly achievementService: AchievementsService,
     private readonly notifcationService: NotificationsService,
+    private readonly paymentsService: PaymentsService,
   ) {}
 
   calculateTotalPrice = async (menus: any[]) => {
@@ -202,6 +204,18 @@ export class EventService {
         date: formatDateToYYYYMMDD(event.date),
         timeSlots: [{ time: event.time, isEvent: true }],
       });
+
+      // Initiate payment for the confirmed event
+      const paymentPayload = {
+        eventId: event._id.toString(),
+        orderNumber: event.orderId.toString(),
+        amount: event.totalAmount.toString(),
+        customerName: customer?.firstName + ' ' + customer?.lastName,
+        customerMobile: customer?.phoneNumber,
+        customerEmail: customer?.email,
+        customerAddress: event.fullAddress?.name || '',
+      };
+      await this.paymentsService.create(paymentPayload);
 
       if (customer) {
         await this.notifcationService.sendNotificationToMultipleTokens({

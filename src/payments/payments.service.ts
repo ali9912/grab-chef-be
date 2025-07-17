@@ -4,6 +4,8 @@ import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { InitiatePaymentDTO } from './dto/initiate-payment.dto';
 import { config } from 'dotenv';
 import axios from 'axios';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 
 config();
 
@@ -11,6 +13,10 @@ const DEMO_URL = process.env.PAYMENT_DEMO_URL;
 
 @Injectable()
 export class PaymentsService {
+  constructor(
+    @InjectModel('Payments') private readonly paymentModel: Model<any>,
+  ) {}
+
   async initiatePayment(body: InitiatePaymentDTO) {
     const authResponse = await this.getPayProAuth();
     if (!authResponse.success) {
@@ -44,6 +50,10 @@ export class PaymentsService {
 
   remove(id: number) {
     return `This action removes a #${id} payment`;
+  }
+
+  async findByEventId(eventId: string) {
+    return this.paymentModel.findOne({ eventId });
   }
 
   private async getPayProAuth() {
