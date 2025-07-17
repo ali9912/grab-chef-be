@@ -154,6 +154,28 @@ export class EventController {
     }
   }
 
+  @Post(':eventId/send-invoice')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CHEF)
+  async sendInvoiceToCustomer(
+    @Param('eventId') eventId: string,
+    @Body() invoiceDto: any,
+    @Req() req: RequestUser,
+  ) {
+    try {
+      return await this.eventService.sendInvoiceToCustomer(
+        req.user._id.toString(),
+        eventId,
+        invoiceDto,
+      );
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to send invoice',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   @Get('detail/:eventId')
   @UseGuards(JwtAuthGuard)
   async getEventById(@Param('eventId') eventId: string) {

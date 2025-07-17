@@ -11,6 +11,7 @@ import { ChefSchema } from 'src/chef/schemas/chef.schema';
 import { AchievementsModule } from 'src/achievements/achievements.module';
 import { MenuSchema } from 'src/menu/schemas/menu.schema';
 import { PaymentsModule } from '../payments/payments.module';
+import { ChatModule } from '../chat/chat.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { PaymentsModule } from '../payments/payments.module';
     AchievementsModule,
     NotificationsModule,
     PaymentsModule,
+    ChatModule,
   ],
   controllers: [EventController],
   providers: [EventService],

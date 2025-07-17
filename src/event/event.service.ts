@@ -21,6 +21,7 @@ import {
 } from './interfaces/event.interface';
 import { MenuItem } from 'src/menu/interfaces/menu.interfaces';
 import { PaymentsService } from '../payments/payments.service';
+import { ChatService } from '../chat/chat.service';
 
 @Injectable()
 export class EventService {
@@ -35,6 +36,7 @@ export class EventService {
     private readonly achievementService: AchievementsService,
     private readonly notifcationService: NotificationsService,
     private readonly paymentsService: PaymentsService,
+    private readonly chatService: ChatService,
   ) {}
 
   calculateTotalPrice = async (menus: any[]) => {
@@ -656,5 +658,61 @@ export class EventService {
       });
     }
     return { message: 'Booking accepted' };
+  }
+
+  async sendInvoiceToCustomer(
+    chefId: string,
+    eventId: string,
+    invoiceDto: any,
+  ) {
+    // Find event and customer
+    const event = await this.eventModel.findById(eventId).exec();
+    if (!event) {
+      throw new HttpException('Event not found', HttpStatus.NOT_FOUND);
+    }
+    if (event.chef.toString() !== chefId) {
+      throw new HttpException('Event does not belong to chef', HttpStatus.FORBIDDEN);
+    }
+    const customer = await this.userModel.findById(event.customer);
+    if (!customer) {
+      throw new HttpException('Customer not found', HttpStatus.NOT_FOUND);
+    }
+    // Create payment for advance amount
+    const paymentPayload = {
+      eventId: event._id.toString(),
+      orderNumber: event.orderId.toString(),
+      amount: invoiceDto.advanceAmount.toString(),
+      customerName: invoiceDto.customerName,
+      customerMobile: customer.phoneNumber,
+      customerEmail: customer.email,
+      customerAddress: event.fullAddress?.name || '',
+      payProOrderId: undefined,
+      payProResponse: undefined,
+    };
+    await this.paymentsService.create(paymentPayload);
+    const payment = await this.paymentsService.findByEventId(event._id.toString());
+    // Compose chat message with invoice link
+    const paymentLink = payment.payProResponse?.paymentLink || 'https://paypro.com.pk/invoice/' + payment.orderNumber;
+    const chatMessage = {
+      type: 'invoice',
+      body: `Please pay your advance for ${invoiceDto.dishTitle}`,
+      paymentLink,
+      amount: invoiceDto.advanceAmount,
+      date: invoiceDto.date,
+      time: invoiceDto.time,
+      numberOfPeople: invoiceDto.numberOfPeople,
+      dishTitle: invoiceDto.dishTitle,
+      totalAmount: invoiceDto.totalAmount,
+      remainingAmount: invoiceDto.remainingAmount,
+    };
+    await this.chatService.sendMessage(
+      chefId,
+      { receiver: customer._id.toString(), body: JSON.stringify(chatMessage), eventId: eventId }
+    );
+    return {
+      message: 'Invoice sent to customer',
+      payment,
+      chatMessage,
+    };
   }
 }
