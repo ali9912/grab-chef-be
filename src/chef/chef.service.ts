@@ -297,9 +297,9 @@ export class ChefService {
             new Date(event.date).toISOString().split('T')[0] === dateStr &&
             event.time === slot.time
         );
-        return { ...slot, isEvent: hasConfirmed ? true : slot.isEvent };
+        return { time: slot.time, isEvent: hasConfirmed ? true : slot.isEvent };
       });
-      return { ...busyDay, timeSlots: updatedTimeSlots };
+      return { date: busyDay.date, timeSlots: updatedTimeSlots };
     });
     return { busyDays, success: true };
   }
@@ -326,9 +326,9 @@ export class ChefService {
             new Date(event.date).toISOString().split('T')[0] === dateStr &&
             event.time === slot.time
         );
-        return { ...slot, isEvent: hasConfirmed ? true : slot.isEvent };
+        return { time: slot.time, isEvent: hasConfirmed ? true : slot.isEvent };
       });
-      return { ...busyDay, timeSlots: updatedTimeSlots };
+      return { date: busyDay.date, timeSlots: updatedTimeSlots };
     });
     return { busyDays, success: true };
   }
