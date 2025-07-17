@@ -118,7 +118,7 @@ export class EventService {
   async confirmBooking(
     userId: string,
     eventId: string,
-    confirmBookingDto: ConfirmBookingDto,
+    confirmBookingDto: ConfirmBookingDto & { invoiceDto?: any },
   ) {
     const event = await this.eventModel.findById(eventId).exec();
     if (!event) {
@@ -231,6 +231,15 @@ export class EventService {
             data: JSON.stringify(event),
           },
         });
+      }
+
+      // If invoiceDto is present, send invoice as part of confirmation
+      if ((confirmBookingDto as any).invoiceDto) {
+        await this.sendInvoiceToCustomer(
+          userId,
+          eventId,
+          (confirmBookingDto as any).invoiceDto,
+        );
       }
     }
 

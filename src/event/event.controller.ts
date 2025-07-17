@@ -54,11 +54,23 @@ export class EventController {
     @Req() req: RequestUser,
   ) {
     try {
-      return await this.eventService.confirmBooking(
+      // Call the original confirmBooking logic
+      const result = await this.eventService.confirmBooking(
         req.user._id.toString(),
         eventId,
         confirmBookingDto,
       );
+
+      // If invoice data is present in the confirmBookingDto, send invoice as part of confirmation
+      if ((confirmBookingDto as any).invoiceDto) {
+        await this.eventService.sendInvoiceToCustomer(
+          req.user._id.toString(),
+          eventId,
+          (confirmBookingDto as any).invoiceDto,
+        );
+      }
+
+      return result;
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to confirm booking',
@@ -149,28 +161,6 @@ export class EventController {
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to accept booking',
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  @Post(':eventId/send-invoice')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.CHEF)
-  async sendInvoiceToCustomer(
-    @Param('eventId') eventId: string,
-    @Body() invoiceDto: any,
-    @Req() req: RequestUser,
-  ) {
-    try {
-      return await this.eventService.sendInvoiceToCustomer(
-        req.user._id.toString(),
-        eventId,
-        invoiceDto,
-      );
-    } catch (error) {
-      throw new HttpException(
-        error.message || 'Failed to send invoice',
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
