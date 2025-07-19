@@ -34,6 +34,12 @@ export class PaymentsController {
     return this.paymentsService.findAll();
   }
 
+  @Get('event/:eventId')
+  async getPaymentByEvent(@Param('eventId') eventId: string) {
+    // Find the payment record for this event
+    return this.paymentsService.findByEventId(eventId);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.paymentsService.findOne(+id);

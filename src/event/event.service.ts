@@ -20,6 +20,8 @@ import {
   MenuItem as MenuDTO,
 } from './interfaces/event.interface';
 import { MenuItem } from 'src/menu/interfaces/menu.interfaces';
+import { PaymentsService } from '../payments/payments.service';
+import { ChatService } from '../chat/chat.service';
 
 @Injectable()
 export class EventService {
@@ -33,6 +35,8 @@ export class EventService {
     private readonly chefService: ChefService,
     private readonly achievementService: AchievementsService,
     private readonly notifcationService: NotificationsService,
+    private readonly paymentsService: PaymentsService,
+    private readonly chatService: ChatService,
   ) {}
 
   calculateTotalPrice = async (menus: any[]) => {
@@ -114,7 +118,7 @@ export class EventService {
   async confirmBooking(
     userId: string,
     eventId: string,
-    confirmBookingDto: ConfirmBookingDto,
+    confirmBookingDto: ConfirmBookingDto & { invoiceDto?: any },
   ) {
     const event = await this.eventModel.findById(eventId).exec();
     if (!event) {
@@ -132,6 +136,39 @@ export class EventService {
     // Only allow confirm if event is ACCEPTED
     if (event.status !== EventStatus.ACCEPTED) {
       throw new HttpException('Event must be accepted before confirmation', HttpStatus.BAD_REQUEST);
+    }
+
+    // If date or time is being updated, check slot availability
+    if (confirmBookingDto.date || confirmBookingDto.time) {
+      const newDate = confirmBookingDto.date ? new Date(confirmBookingDto.date) : event.date;
+      const newTime = confirmBookingDto.time ? confirmBookingDto.time : event.time;
+      // Check if slot is available in chef's busyDays
+      const chefDoc = await this.chefModel.findOne({ userId });
+      if (!chefDoc) {
+        throw new HttpException('Chef not found', HttpStatus.NOT_FOUND);
+      }
+      const busyDay = chefDoc.busyDays.find(
+        (d) => new Date(d.date).toISOString().split('T')[0] === newDate.toISOString().split('T')[0]
+      );
+      if (!busyDay) {
+        throw new HttpException('Selected date is not available for this chef', HttpStatus.BAD_REQUEST);
+      }
+      const slot = busyDay.timeSlots.find((s) => s.time === newTime);
+      if (!slot) {
+        throw new HttpException('Selected time slot is not available for this chef', HttpStatus.BAD_REQUEST);
+      }
+      // Check if slot is already booked by a confirmed event
+      const confirmedEvent = await this.eventModel.findOne({
+        chef: userId,
+        date: newDate,
+        time: newTime,
+        status: EventStatus.CONFIRMED,
+      });
+      if (slot.isEvent || confirmedEvent) {
+        throw new HttpException('Selected time slot is already booked', HttpStatus.BAD_REQUEST);
+      }
+      event.date = newDate;
+      event.time = newTime;
     }
 
     const chef = await this.chefService.getChefByUserId(userId);
@@ -170,6 +207,18 @@ export class EventService {
         timeSlots: [{ time: event.time, isEvent: true }],
       });
 
+      // Initiate payment for the confirmed event
+      const paymentPayload = {
+        eventId: event._id.toString(),
+        orderNumber: event.orderId.toString(),
+        amount: event.totalAmount.toString(),
+        customerName: customer?.firstName + ' ' + customer?.lastName,
+        customerMobile: customer?.phoneNumber,
+        customerEmail: customer?.email,
+        customerAddress: event.fullAddress?.name || '',
+      };
+      await this.paymentsService.create(paymentPayload);
+
       if (customer) {
         await this.notifcationService.sendNotificationToMultipleTokens({
           tokens: customer.fcmTokens,
@@ -182,6 +231,15 @@ export class EventService {
             data: JSON.stringify(event),
           },
         });
+      }
+
+      // If invoiceDto is present, send invoice as part of confirmation
+      if ((confirmBookingDto as any).invoiceDto) {
+        await this.sendInvoiceToCustomer(
+          userId,
+          eventId,
+          (confirmBookingDto as any).invoiceDto,
+        );
       }
     }
 
@@ -609,5 +667,61 @@ export class EventService {
       });
     }
     return { message: 'Booking accepted' };
+  }
+
+  async sendInvoiceToCustomer(
+    chefId: string,
+    eventId: string,
+    invoiceDto: any,
+  ) {
+    // Find event and customer
+    const event = await this.eventModel.findById(eventId).exec();
+    if (!event) {
+      throw new HttpException('Event not found', HttpStatus.NOT_FOUND);
+    }
+    if (event.chef.toString() !== chefId) {
+      throw new HttpException('Event does not belong to chef', HttpStatus.FORBIDDEN);
+    }
+    const customer = await this.userModel.findById(event.customer);
+    if (!customer) {
+      throw new HttpException('Customer not found', HttpStatus.NOT_FOUND);
+    }
+    // Create payment for advance amount
+    const paymentPayload = {
+      eventId: event._id.toString(),
+      orderNumber: event.orderId.toString(),
+      amount: invoiceDto.advanceAmount.toString(),
+      customerName: invoiceDto.customerName,
+      customerMobile: customer.phoneNumber,
+      customerEmail: customer.email,
+      customerAddress: event.fullAddress?.name || '',
+      payProOrderId: undefined,
+      payProResponse: undefined,
+    };
+    await this.paymentsService.create(paymentPayload);
+    const payment = await this.paymentsService.findByEventId(event._id.toString());
+    // Compose chat message with invoice link
+    const paymentLink = payment.payProResponse?.paymentLink || 'https://paypro.com.pk/invoice/' + payment.orderNumber;
+    const chatMessage = {
+      type: 'invoice',
+      body: `Please pay your advance for ${invoiceDto.dishTitle}`,
+      paymentLink,
+      amount: invoiceDto.advanceAmount,
+      date: invoiceDto.date,
+      time: invoiceDto.time,
+      numberOfPeople: invoiceDto.numberOfPeople,
+      dishTitle: invoiceDto.dishTitle,
+      totalAmount: invoiceDto.totalAmount,
+      remainingAmount: invoiceDto.remainingAmount,
+    };
+    await this.chatService.sendMessage(
+      chefId,
+      { receiver: customer._id.toString(), body: JSON.stringify(chatMessage), eventId: eventId }
+    );
+    return {
+      message: 'Invoice sent to customer',
+      payment,
+      chatMessage,
+    };
   }
 }

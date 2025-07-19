@@ -10,6 +10,8 @@ import { UserSchema } from 'src/users/schemas/user.schema';
 import { ChefSchema } from 'src/chef/schemas/chef.schema';
 import { AchievementsModule } from 'src/achievements/achievements.module';
 import { MenuSchema } from 'src/menu/schemas/menu.schema';
+import { PaymentsModule } from '../payments/payments.module';
+import { ChatModule } from '../chat/chat.module';
 
 @Module({
   imports: [
@@ -22,6 +24,8 @@ import { MenuSchema } from 'src/menu/schemas/menu.schema';
     CustomerModule,
     AchievementsModule,
     NotificationsModule,
+    PaymentsModule,
+    ChatModule,
   ],
   controllers: [EventController],
   providers: [EventService],

@@ -8,6 +8,10 @@ export class SendMessageDto {
   @IsString()
   @IsNotEmpty()
   body: string;
+
+  @IsString()
+  @IsNotEmpty()
+  eventId: string;
 }
 
 export class AttachFileDto {
@@ -18,4 +22,8 @@ export class AttachFileDto {
   @IsString()
   @IsNotEmpty()
   fileUrl: string;
+
+  @IsString()
+  @IsNotEmpty()
+  eventId: string;
 } 

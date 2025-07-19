@@ -6,6 +6,7 @@ export interface Message extends Document {
   body: string;
   createdAt: Date;
   read: boolean;
+  eventId: Types.ObjectId;
   // File attachment properties
   fileUrl?: string;
   fileName?: string;
