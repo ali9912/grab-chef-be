@@ -631,4 +631,50 @@ export class ChefService {
 
   //   return { message: 'Menu item updated successfully' };
   // }
+
+  async replaceBusySlotsForDate(busyDataDto: BusyDataDto, userId: string) {
+    const chef = await this.chefModel.findOne({ userId });
+    if (!chef) {
+      throw new HttpException(
+        'Chef with the given user id not exists',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    const eventDateISO = new Date(busyDataDto.date).toISOString();
+    let busyDayIndex = chef.busyDays.findIndex(
+      (day) => day.date.toISOString() === eventDateISO,
+    );
+
+    if (busyDataDto.timeSlots.length === 0) {
+      // Remove the busyDay for this date if no slots are provided
+      if (busyDayIndex !== -1) {
+        chef.busyDays.splice(busyDayIndex, 1);
+      }
+    } else {
+      if (busyDayIndex !== -1) {
+        // Replace the timeSlots for the existing busyDay
+        chef.busyDays[busyDayIndex].timeSlots = busyDataDto.timeSlots.map(slot => ({
+          time: slot.time,
+          isEvent: slot.isEvent ?? false,
+        }));
+      } else {
+        // Add a new busyDay for this date
+        chef.busyDays.push({
+          date: new Date(busyDataDto.date),
+          timeSlots: busyDataDto.timeSlots.map(slot => ({
+            time: slot.time,
+            isEvent: slot.isEvent ?? false,
+          })),
+        });
+      }
+    }
+
+    await chef.save();
+    return {
+      busyDays: chef.busyDays,
+      success: true,
+      message: "Chef's busy slots replaced for the date.",
+    };
+  }
 }
