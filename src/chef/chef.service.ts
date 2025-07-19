@@ -646,6 +646,19 @@ export class ChefService {
       (day) => day.date.toISOString() === eventDateISO,
     );
 
+    // If busyDay exists, check for isEvent: true slots that would be removed
+    if (busyDayIndex !== -1) {
+      const existingSlots = chef.busyDays[busyDayIndex].timeSlots;
+      const newTimes = busyDataDto.timeSlots.map(slot => slot.time);
+      const forbiddenSlots = existingSlots.filter(slot => slot.isEvent === true && !newTimes.includes(slot.time));
+      if (forbiddenSlots.length > 0) {
+        throw new HttpException(
+          `Slots with isEvent: true cannot be removed: ${forbiddenSlots.map(s => s.time).join(', ')}`,
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+    }
+
     if (busyDataDto.timeSlots.length === 0) {
       // Remove the busyDay for this date if no slots are provided
       if (busyDayIndex !== -1) {
