@@ -85,6 +85,27 @@ export class ChefController {
     }
   }
 
+  @Post('busydays/replace')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CHEF)
+  async replaceBusySlots(
+    @Body() busyDataDto: BusyDataDto,
+    @Req() req: RequestUser,
+  ) {
+    try {
+      const { _id } = req.user;
+      return await this.chefService.replaceBusySlotsForDate(
+        busyDataDto,
+        _id.toString(),
+      );
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to replace busy slots',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   @Get('busydays')
   @UseGuards(JwtAuthGuard)
   async getChefBusyDays(@Req() req: RequestUser) {
