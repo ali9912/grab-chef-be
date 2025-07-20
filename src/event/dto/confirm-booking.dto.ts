@@ -24,6 +24,9 @@ export class ConfirmBookingDto {
   @IsString()
   @IsOptional()
   time?: string;
+
+  @IsOptional()
+  invoiceDto?: any;
 }
 
 export class CancelBookingDto {
