@@ -34,6 +34,17 @@ export type Ingredients = {
   quantity?: number;
 };
 
+interface Invoice {
+  advanceAmount?: number;
+  customerName?: string;
+  date?: Date;
+  time?: string;
+  numberOfPeople?: number;
+  dishTitle?: string;
+  totalAmount?: number;
+  remainingAmount?: number;
+}
+
 export interface Event extends Document {
   customer: Types.ObjectId;
   chef: Types.ObjectId;
@@ -45,6 +56,7 @@ export interface Event extends Document {
   status: EventStatus;
   rejectionReason?: string;
   attendance?: Attendance[];
+  invoice: Invoice[];
   totalAmount: number;
   createdAt: Date;
   updatedAt: Date;

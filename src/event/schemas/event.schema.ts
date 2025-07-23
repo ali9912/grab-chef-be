@@ -31,6 +31,17 @@ const IngredientSchema = new mongoose.Schema({
   },
 });
 
+const InvoiceSchema = new mongoose.Schema({
+  advanceAmount: { type: Number },
+  customerName: { type: String },
+  date: { type: Date },
+  time: { type: String },
+  numberOfPeople: { type: Number },
+  dishTitle: { type: String },
+  totalAmount: { type: Number },
+  remainingAmount: { type: Number },
+});
+
 const AttendanceSchema = new mongoose.Schema({
   status: {
     type: String,
@@ -89,6 +100,8 @@ export const EventSchema = new mongoose.Schema({
   },
 
   attendance: [AttendanceSchema],
+
+  invoice: [InvoiceSchema],
 
   totalAmount: {
     type: Number,
