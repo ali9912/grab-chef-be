@@ -86,6 +86,17 @@ export class ChatService {
         }
       },
       { $unwind: "$user" },
+      // Get event details
+      {
+        $lookup: {
+          from: "events",
+          localField: "_id.eventId",
+          foreignField: "_id",
+          as: "event"
+        }
+      },
+      { $unwind: { path: "$event", preserveNullAndEmptyArrays: true } },
+
       {
         $project: {
           user: {
