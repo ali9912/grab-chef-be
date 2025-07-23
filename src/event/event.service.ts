@@ -198,6 +198,20 @@ export class EventService {
       }
     }
 
+    if (confirmBookingDto.invoiceDto) {
+      event.invoice.push({
+        advanceAmount: confirmBookingDto.invoiceDto.advanceAmount,
+        customerName: confirmBookingDto.invoiceDto.customerName,
+        date: new Date(confirmBookingDto.invoiceDto.date),
+        time: confirmBookingDto.invoiceDto.time,
+        numberOfPeople: confirmBookingDto.invoiceDto.numberOfPeople,
+        dishTitle: confirmBookingDto.invoiceDto.dishTitle,
+        totalAmount: confirmBookingDto.invoiceDto.totalAmount,
+        remainingAmount: confirmBookingDto.invoiceDto.remainingAmount,
+      });
+      event.totalAmount = confirmBookingDto.invoiceDto.totalAmount;
+    }
+
     await event.save();
 
     if (confirmBookingDto.status !== 'rejected') {
