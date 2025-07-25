@@ -32,8 +32,37 @@ export class PaymentsService {
   }
 
   async create(createPaymentDto: CreatePaymentDto) {
-    const authResponse = await this.getPayProAuth();
-    return 'This action adds a new payment';
+    // Prepare payload for PayPro
+    const initiatePayload = {
+      OrderNumber: createPaymentDto.orderNumber,
+      OrderAmount: createPaymentDto.amount,
+      CustomerName: createPaymentDto.customerName,
+      CustomerMobile: createPaymentDto.customerMobile,
+      CustomerEmail: createPaymentDto.customerEmail,
+      CustomerAddress: createPaymentDto.customerAddress,
+    };
+
+    let payProResponse = undefined;
+    let payProOrderId = undefined;
+    try {
+      const authResponse = await this.getPayProAuth();
+      if (authResponse.success && authResponse.token) {
+        payProResponse = await this.createPayProOrderFetch(initiatePayload, authResponse.token);
+        payProOrderId = payProResponse?.OrderId || undefined;
+      }
+    } catch (error) {
+      // Log error but do not throw, so payment is still created
+      console.error('PayPro API error:', error?.response?.data || error.message);
+    }
+
+    // Create payment in DB
+    const paymentDoc = new this.paymentModel({
+      ...createPaymentDto,
+      payProOrderId,
+      payProResponse,
+    });
+    await paymentDoc.save();
+    return paymentDoc;
   }
 
   findAll() {
