@@ -108,7 +108,8 @@ export class ChatService {
             role: 1
           },
           eventId: "$_id.eventId",
-          lastMessage: 1
+          lastMessage: 1,
+          event: "$event"
         }
       }
     ]);
