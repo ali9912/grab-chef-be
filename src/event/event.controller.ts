@@ -61,14 +61,15 @@ export class EventController {
         confirmBookingDto,
       );
 
+      // Commenting it ebcasue we are making two calls, we already doing in sendInvoiceToCustomer.
       // If invoice data is present in the confirmBookingDto, send invoice as part of confirmation
-      if ((confirmBookingDto as any).invoiceDto) {
-        await this.eventService.sendInvoiceToCustomer(
-          req.user._id.toString(),
-          eventId,
-          (confirmBookingDto as any).invoiceDto,
-        );
-      }
+      // if ((confirmBookingDto as any).invoiceDto) {
+      //   await this.eventService.sendInvoiceToCustomer(
+      //     req.user._id.toString(),
+      //     eventId,
+      //     (confirmBookingDto as any).invoiceDto,
+      //   );
+      // }
 
       return result;
     } catch (error) {
