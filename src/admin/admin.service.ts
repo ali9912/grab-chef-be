@@ -176,7 +176,59 @@ export class AdminService {
       })
       .populate('ingredients')
       .exec();
-    return { event };
+
+    // Get customer favorite chefs if event has a customer
+    let customerFavoriteChefs = [];
+    if (event?.customer) {
+      const customerId = event.customer._id || event.customer;
+      
+      const favoriteChefsPipeline: PipelineStage[] = [
+        { $match: { customer: new mongoose.Types.ObjectId(customerId) } },
+        {
+          $group: {
+            _id: '$chef',
+            orderCount: { $sum: 1 },
+          },
+        },
+        {
+          $lookup: {
+            from: 'users',
+            localField: '_id',
+            foreignField: '_id',
+            as: 'chefDetails',
+          },
+        },
+        { $unwind: '$chefDetails' },
+        {
+          $addFields: {
+            chefName: {
+              $concat: ['$chefDetails.firstName', ' ', '$chefDetails.lastName'],
+            },
+            chefProfilePicture: '$chefDetails.profilePicture',
+            percentage: { $multiply: ['$orderCount', 100] },
+          },
+        },
+        { $sort: { orderCount: -1 } },
+        { $limit: 10 },
+      ];
+
+      const totalOrders = await this.eventModel.countDocuments({ 
+        customer: new mongoose.Types.ObjectId(customerId) 
+      });
+
+      const favoriteChefsRaw = await this.eventModel.aggregate(favoriteChefsPipeline);
+
+      // Calculate final percentage
+      customerFavoriteChefs = favoriteChefsRaw.map(chef => ({
+        chefId: chef._id,
+        chefName: chef.chefName,
+        chefProfilePicture: chef.chefProfilePicture,
+        orderCount: chef.orderCount,
+        percentage: totalOrders > 0 ? Math.round((chef.orderCount / totalOrders) * 100) : 0
+      }));
+    }
+
+    return { event, customerFavoriteChefs };
   }
 
   async getUserUpcomingEvent(userId: string) {
