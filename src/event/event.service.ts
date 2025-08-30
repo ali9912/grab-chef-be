@@ -173,6 +173,9 @@ export class EventService {
 
     const chef = await this.chefService.getChefByUserId(userId);
     const customer = await this.userModel.findById(event.customer);
+    
+    const chefUser = await this.userModel.findById(userId);
+    const chefName = chefUser ? `${chefUser.firstName} ${chefUser.lastName}`.trim() : 'Chef';
 
     // Update event status
     event.status =
@@ -188,7 +191,7 @@ export class EventService {
           tokens: customer.fcmTokens,
           title: 'Event request rejected',
           userId: customer._id.toString(),
-          body: 'Chef has rejected your event request',
+          body: `${chefName} has rejected your event request`,
           token: '',
           data: {
             type: 'chef-event-rejected',
@@ -238,7 +241,7 @@ export class EventService {
           tokens: customer.fcmTokens,
           userId: customer._id.toString(),
           title: 'Event request approved',
-          body: 'Congratulations! Chef has approved your event request.',
+          body: `Congratulations! ${chefName} has approved your event request.`,
           token: '',
           data: {
             type: 'chef-event-approved',
@@ -665,6 +668,10 @@ export class EventService {
     }
     event.status = EventStatus.ACCEPTED;
     await event.save();
+    
+    const chef = await this.userModel.findById(userId);
+    const chefName = chef ? `${chef.firstName} ${chef.lastName}`.trim() : 'Chef';
+    
     // Notify customer
     const customer = await this.userModel.findById(event.customer);
     if (customer) {
@@ -672,7 +679,7 @@ export class EventService {
         tokens: customer.fcmTokens,
         userId: customer._id.toString(),
         title: 'Event request accepted',
-        body: 'Chef has accepted your event request.',
+        body: `${chefName} has accepted your event request.`,
         token: '',
         data: {
           type: 'chef-event-accepted',
