@@ -118,7 +118,21 @@ export class ChatService {
       {
         $group: {
           _id: { eventId: "$eventId", chatPartner: "$chatPartner" },
-          lastMessage: { $first: "$$ROOT" }
+          lastMessage: { $first: "$$ROOT" },
+          unreadCount: {
+            $sum: {
+              $cond: [
+                { 
+                  $and: [
+                    { $eq: ["$receiver", new mongoose.Types.ObjectId(userId)] },
+                    { $ne: ["$read", true] }
+                  ]
+                },
+                1,
+                0
+              ]
+            }
+          }
         }
       },
       {
@@ -153,6 +167,8 @@ export class ChatService {
           },
           eventId: "$_id.eventId",
           lastMessage: 1,
+          lastMessageTime: "$lastMessage.createdAt",
+          unreadCount: 1,
           event: "$event"
         }
       }
