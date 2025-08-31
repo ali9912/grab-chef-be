@@ -115,7 +115,7 @@ export class AdminService {
 
   async getChefRequests() {
     const chef = await this.chefModel
-      .find({ status: ChefVerificationStatus.PENDING })
+      .find()
       .populate('userId');
     return { chef };
   }
