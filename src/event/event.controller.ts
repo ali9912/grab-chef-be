@@ -23,12 +23,16 @@ import { AttendanceDto } from './dto/attendance.dto';
 import { BookingDto } from './dto/booking.dto';
 import { CancelBookingDto, ConfirmBookingDto, AcceptBookingDto } from './dto/confirm-booking.dto';
 import { EventService } from './event.service';
+import { BookingReminderService } from './booking-reminder.service';
 import { GetEventQueryType } from './interfaces/event.interface';
 
 @ApiTags('Event')
 @Controller('event')
 export class EventController {
-  constructor(private readonly eventService: EventService) {}
+  constructor(
+    private readonly eventService: EventService,
+    private readonly bookingReminderService: BookingReminderService,
+  ) {}
 
   @ApiBearerAuth('JWT-auth')
   @Post('create')
@@ -266,6 +270,66 @@ export class EventController {
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to delete event',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // ==================== BOOKING REMINDER ENDPOINTS ====================
+
+  @ApiBearerAuth('JWT-auth')
+  @Post('reminders/trigger')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  // @Roles(UserRole.ADMIN)
+  async triggerManualReminders() {
+    try {
+      return await this.bookingReminderService.triggerManualReminders();
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to trigger manual reminders',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @ApiBearerAuth('JWT-auth')
+  @Get('reminders/upcoming')
+  @UseGuards(JwtAuthGuard)
+  async getUserUpcomingReminders(
+    @Query('isCustomer') isCustomer: boolean = true,
+    @Req() req: RequestUser,
+  ) {
+    try {
+      return await this.bookingReminderService.getUserUpcomingReminders(
+        req.user._id.toString(),
+        isCustomer,
+      );
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to get upcoming reminders',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @ApiBearerAuth('JWT-auth')
+  @Get('reminders/status')
+  @UseGuards(JwtAuthGuard)
+  async getReminderStatus() {
+    try {
+      return {
+        success: true,
+        message: 'Booking reminder service is active',
+        reminderIntervals: [
+          { hours: 24, label: '24 hours before' },
+          { hours: 2, label: '2 hours before' },
+          { hours: 0.5, label: '30 minutes before' }
+        ],
+        checkFrequency: 'Every 15 minutes'
+      };
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to get reminder status',
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

@@ -250,6 +250,9 @@ export class EventService {
             data: JSON.stringify(event),
           },
         });
+
+        // Send immediate confirmation reminder
+        await this.sendConfirmationReminder(event, customer, chefUser);
       }
 
       // If invoiceDto is present, send invoice as part of confirmation
@@ -263,6 +266,67 @@ export class EventService {
     }
 
     return { message: 'Booking status updated' };
+  }
+
+  /**
+   * Send immediate confirmation reminder when booking is confirmed
+   */
+  private async sendConfirmationReminder(
+    event: Event,
+    customer: User,
+    chefUser: User,
+  ) {
+    try {
+      const customerName = customer ? `${customer.firstName} ${customer.lastName}`.trim() : 'Customer';
+      const chefName = chefUser ? `${chefUser.firstName} ${chefUser.lastName}`.trim() : 'Chef';
+      const eventDate = event.date.toLocaleDateString();
+      const eventTime = event.time;
+      const eventAddress = event.fullAddress?.name || event.area;
+
+      // Send confirmation reminder to customer
+      if (customer?.fcmTokens?.length) {
+        await this.notifcationService.sendNotificationToMultipleTokens({
+          tokens: customer.fcmTokens,
+          userId: customer._id.toString(),
+          title: '🎉 Booking Confirmed!',
+          body: `Your event with ${chefName} is confirmed for ${eventDate} at ${eventTime} in ${eventAddress}. Get ready for an amazing experience!`,
+          token: customer.fcmTokens[0],
+          data: {
+            type: 'booking_confirmed',
+            eventId: event._id.toString(),
+            orderId: event.orderId.toString(),
+            date: eventDate,
+            time: eventTime,
+            address: eventAddress
+          },
+        });
+      }
+
+      // Send confirmation reminder to chef
+      if (chefUser?.fcmTokens?.length) {
+        await this.notifcationService.sendNotificationToMultipleTokens({
+          tokens: chefUser.fcmTokens,
+          userId: chefUser._id.toString(),
+          title: '📋 New Confirmed Booking',
+          body: `You have a confirmed event with ${customerName} on ${eventDate} at ${eventTime} in ${eventAddress}. Order #${event.orderId}`,
+          token: chefUser.fcmTokens[0],
+          data: {
+            type: 'booking_confirmed_chef',
+            eventId: event._id.toString(),
+            orderId: event.orderId.toString(),
+            date: eventDate,
+            time: eventTime,
+            address: eventAddress,
+            customerName: customerName
+          },
+        });
+      }
+
+      console.log(`Sent confirmation reminders for event ${event._id}`);
+    } catch (error) {
+      console.error('Error sending confirmation reminder:', error);
+      // Don't fail the main operation if reminders fail
+    }
   }
 
   async customerCancelEvent(
