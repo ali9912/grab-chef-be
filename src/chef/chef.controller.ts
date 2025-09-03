@@ -11,6 +11,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
@@ -21,10 +22,12 @@ import { ChefService } from './chef.service';
 import { CreateEmergencyDto } from './dto/-emergency.dto';
 import { BusyDataDto, RemoveDateDto } from './dto/busy-data-dto';
 
+@ApiTags('Chef')
 @Controller('chef')
 export class ChefController {
   constructor(private readonly chefService: ChefService) {}
 
+  @ApiBearerAuth('JWT-auth')
   @Get('list')
   @UseGuards(JwtAuthGuard)
   async getAllChefs(
@@ -43,6 +46,7 @@ export class ChefController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Post('busydays')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CHEF)
@@ -64,6 +68,7 @@ export class ChefController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Post('busydays/remove')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CHEF)
@@ -85,6 +90,7 @@ export class ChefController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Post('busydays/replace')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CHEF)
@@ -106,6 +112,7 @@ export class ChefController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Get('busydays')
   @UseGuards(JwtAuthGuard)
   async getChefBusyDays(@Req() req: RequestUser) {
@@ -120,6 +127,7 @@ export class ChefController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Get(':chefId/busydays')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CUSTOMER)
@@ -134,6 +142,7 @@ export class ChefController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Get('favourite')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CUSTOMER)
@@ -149,6 +158,7 @@ export class ChefController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Post(':chefId/favourite')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CUSTOMER)
@@ -167,6 +177,7 @@ export class ChefController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Delete(':chefId/favourite')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CUSTOMER)
@@ -185,6 +196,7 @@ export class ChefController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Post('emergency')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CHEF)
@@ -206,6 +218,7 @@ export class ChefController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Get('emergency')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CHEF)
@@ -221,6 +234,7 @@ export class ChefController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Get(':userId/emergency')
   @UseGuards(JwtAuthGuard, RolesGuard)
   async getChefEmergencyContact(@Param('userId') userId: string) {

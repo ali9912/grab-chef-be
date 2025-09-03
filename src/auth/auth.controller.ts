@@ -11,6 +11,7 @@ import {
   Delete,
   Patch,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { ChefAuthDto, RegisterDto } from './dto/register.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
@@ -27,6 +28,7 @@ import { Roles } from './decorators/roles.decorator';
 import { UserRole } from 'src/users/interfaces/user.interface';
 import { EditCustomerDto } from './dto/edit-customer.dto';
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) { }
@@ -43,7 +45,8 @@ export class AuthController {
     }
   }
 
-  @UseGuards(JwtAuthChefGuard)
+  @ApiBearerAuth('JWT-auth')
+  @UseGuards(JwtAuthGuard)
   @Put('chef/profile')
   async editChefProfile(
     @Body() chefAuthDto: EditChefDto,
@@ -72,6 +75,7 @@ export class AuthController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Patch('customer/edit')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CUSTOMER)
@@ -168,6 +172,7 @@ export class AuthController {
   //   }
   // }
 
+  @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard)
   @Post('create-password')
   async createPassword(
@@ -209,6 +214,7 @@ export class AuthController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Post('logout')
   @UseGuards(JwtAuthGuard)
   async logout(@Body() logoutDto: LogoutDto, @Req() req: RequestUser) {
@@ -235,6 +241,7 @@ export class AuthController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard)
   @Delete('user/delete')
   async deleteUser(@Req() request: RequestUser) {

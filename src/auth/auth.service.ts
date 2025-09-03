@@ -22,6 +22,7 @@ import { ChefAuthDto } from './dto/register.dto';
 import { LoginWithPhoneDto } from './dto/signup-with-phone.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { Otp } from './interfaces/otp.interface';
+import { NotificationsService } from 'src/notifications/notifications.service';
 
 @Injectable()
 export class AuthService {
@@ -37,6 +38,7 @@ export class AuthService {
     @InjectModel('Otp') private readonly otpModel: Model<Otp>,
     @InjectModel('User') private readonly userModel: Model<User>,
     @InjectModel('Chef') private readonly chefModel: Model<Chef>,
+    private readonly notificationService: NotificationsService,
   ) {}
 
   async chefAuth(chefAuthDto: ChefAuthDto) {
@@ -92,6 +94,19 @@ export class AuthService {
       await this.addFcmTokenToUser(fcmToken, user._id.toString());
     }
 
+    // Send welcome notification to the user
+    await this.notificationService.sendNotificationToMultipleTokens({
+      tokens: user.fcmTokens,
+      userId: user._id.toString(),
+      title: 'Welcome to Grab Chef!',
+      body: 'Thank you for registering with Grab Chef. Please fill in your profile to get started.',
+      token: '',
+      data: {
+        type: 'chef-onboarding',
+        data: JSON.stringify(user),
+      },
+    });
+    
     // Delete OTP record
     await this.otpModel.deleteOne({ _id: otpRecord._id }).exec();
 
@@ -220,6 +235,19 @@ export class AuthService {
     }
 
     const token = this.generateToken(newUser);
+
+    // Send onboarding notification to the customer
+    await this.notificationService.sendNotificationToMultipleTokens({
+      tokens: newUser.fcmTokens,
+      userId: newUser._id.toString(),
+      title: 'Welcome to Grab Chef!',
+      body: 'Thank you for registering with Grab Chef. Please fill in your profile to get started.',
+      token: '',
+      data: {
+        type: 'customer-onboarding',
+        data: JSON.stringify(newUser),
+      },
+    });
 
     return {
       status: 'success',

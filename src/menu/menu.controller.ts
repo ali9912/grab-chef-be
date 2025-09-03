@@ -13,6 +13,7 @@ import {
   HttpStatus,
   Query,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { MenuService } from './menu.service';
 import { CreateMenuDto } from './dto/create-menu.dto';
 import { UpdateMenuDto } from './dto/update-menu.dto';
@@ -24,10 +25,12 @@ import { UserRole } from 'src/users/interfaces/user.interface';
 import { RequestUser } from 'src/auth/interfaces/request-user.interface';
 import { MenuQueryDto } from './dto/random-menu.dto';
 
+@ApiTags('Menu')
 @Controller('menu')
 export class MenuController {
   constructor(private readonly menuService: MenuService) {}
 
+  @ApiBearerAuth('JWT-auth')
   @Get('random')
   @UseGuards(JwtAuthGuard)
   async getRandomMenu() {
@@ -41,6 +44,7 @@ export class MenuController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Get('list')
   @UseGuards(JwtAuthGuard)
   async getMenuList(@Query() menuQueryDto: MenuQueryDto) {
@@ -54,6 +58,7 @@ export class MenuController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CHEF)
@@ -69,6 +74,7 @@ export class MenuController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CHEF)
@@ -88,16 +94,32 @@ export class MenuController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Get('me')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CHEF)
-  getCurrentChefMenu(@Req() req: RequestUser) {
+  async getMyMenus(@Req() req: RequestUser) {
     try {
       const user = req.user;
-      return this.menuService.getCurrentChefMenus(req.user);
+      return this.menuService.getCurrentChefMenus(user);
     } catch (error) {
       throw new HttpException(
-        error.message || 'Failed to get chef menu.',
+        error.message || 'Failed to get my menus.',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @ApiBearerAuth('JWT-auth')
+  @Post('send-random-notifications')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  async sendRandomDishNotifications() {
+    try {
+      return this.menuService.sendRandomDishNotifications();
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to send random dish notifications.',
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

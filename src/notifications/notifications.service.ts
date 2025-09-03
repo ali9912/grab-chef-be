@@ -55,10 +55,6 @@ export class NotificationsService {
     };
 
     try {
-      if (tokens.length == 0) {
-        return { success: false, message: 'No Tokens' };
-      }
-      const response = await admin.messaging().sendEachForMulticast(message);
       if (userId) {
         await this.notificationModel.create({
           user: userId,
@@ -67,6 +63,10 @@ export class NotificationsService {
           data,
         });
       }
+      if (tokens.length == 0) {
+        return { success: false, message: 'No Tokens' };
+      }
+      const response = await admin.messaging().sendEachForMulticast(message);
       console.log('Successfully sent messages:', response.responses[0].error);
       return {
         success: true,

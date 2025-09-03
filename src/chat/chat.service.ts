@@ -5,12 +5,16 @@ import { Message } from './interfaces/message.interface';
 import { SendMessageDto, AttachFileDto } from './dto/message.dto';
 import * as mongoose from 'mongoose';
 import { ChatGateway } from './chat.gateway';
+import { NotificationsService } from '../notifications/notifications.service';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class ChatService {
   constructor(
     @InjectModel('Message') private readonly messageModel: Model<Message>,
     private readonly chatGateway: ChatGateway,
+    private readonly notificationsService: NotificationsService,
+    private readonly usersService: UsersService,
   ) {}
 
   async sendMessage(senderId: string, sendMessageDto: SendMessageDto) {
@@ -28,6 +32,46 @@ export class ChatService {
     this.chatGateway.server.to(receiver).emit('chatHistoryUpdate', savedMessage);
     this.chatGateway.server.to(senderId).emit('myChatsUpdate');
     this.chatGateway.server.to(receiver).emit('myChatsUpdate');
+
+    // push notification
+    try {
+      const sender = await this.usersService.findById(senderId);
+      const receiverUser = await this.usersService.findById(receiver);
+      
+      if (sender && receiverUser && receiverUser.fcmTokens && receiverUser.fcmTokens.length > 0) {
+        const senderName = sender.firstName && sender.lastName 
+          ? `${sender.firstName} ${sender.lastName}`.trim() 
+          : 'Someone';
+        
+        let messageText = body;
+        try {
+          const parsedBody = JSON.parse(body);
+          if (parsedBody.type === 'invoice') {
+            messageText = 'Sent you an invoice';
+          } else if (parsedBody.body) {
+            messageText = parsedBody.body;
+          }
+        } catch (e) {
+          messageText = body;
+        }
+
+        await this.notificationsService.sendNotificationToMultipleTokens({
+          tokens: receiverUser.fcmTokens,
+          userId: receiverUser._id.toString(),
+          title: `${senderName} texted you`,
+          body: messageText,
+          token: '',
+          data: {
+            type: 'chat-message',
+            eventId: eventId || '',
+            senderId: senderId,
+            data: JSON.stringify(savedMessage),
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Error sending chat notification:', error);
+    }
 
     return savedMessage;
   }
@@ -74,7 +118,21 @@ export class ChatService {
       {
         $group: {
           _id: { eventId: "$eventId", chatPartner: "$chatPartner" },
-          lastMessage: { $first: "$$ROOT" }
+          lastMessage: { $first: "$$ROOT" },
+          unreadCount: {
+            $sum: {
+              $cond: [
+                { 
+                  $and: [
+                    { $eq: ["$receiver", new mongoose.Types.ObjectId(userId)] },
+                    { $ne: ["$read", true] }
+                  ]
+                },
+                1,
+                0
+              ]
+            }
+          }
         }
       },
       {
@@ -109,6 +167,8 @@ export class ChatService {
           },
           eventId: "$_id.eventId",
           lastMessage: 1,
+          lastMessageTime: "$lastMessage.createdAt",
+          unreadCount: 1,
           event: "$event"
         }
       }
@@ -138,6 +198,36 @@ export class ChatService {
     this.chatGateway.server.to(receiver).emit('chatHistoryUpdate', savedMessage);
     this.chatGateway.server.to(senderId).emit('myChatsUpdate');
     this.chatGateway.server.to(receiver).emit('myChatsUpdate');
+
+    // push notification
+    try {
+      const sender = await this.usersService.findById(senderId);
+      const receiverUser = await this.usersService.findById(receiver);
+      
+      if (sender && receiverUser && receiverUser.fcmTokens && receiverUser.fcmTokens.length > 0) {
+        const senderName = sender.firstName && sender.lastName 
+          ? `${sender.firstName} ${sender.lastName}`.trim() 
+          : 'Someone';
+        
+        const fileTypeText = fileType ? `a ${fileType.toUpperCase()} file` : 'a file';
+
+        await this.notificationsService.sendNotificationToMultipleTokens({
+          tokens: receiverUser.fcmTokens,
+          userId: receiverUser._id.toString(),
+          title: `${senderName} texted you`,
+          body: `Sent you ${fileTypeText}`,
+          token: '',
+          data: {
+            type: 'chat-file',
+            eventId: eventId || '',
+            senderId: senderId,
+            data: JSON.stringify(savedMessage),
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Error sending file notification:', error);
+    }
 
     return savedMessage;
   }

@@ -12,6 +12,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { RequestUser } from 'src/auth/interfaces/request-user.interface';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -22,12 +23,18 @@ import { AttendanceDto } from './dto/attendance.dto';
 import { BookingDto } from './dto/booking.dto';
 import { CancelBookingDto, ConfirmBookingDto, AcceptBookingDto } from './dto/confirm-booking.dto';
 import { EventService } from './event.service';
+import { BookingReminderService } from './booking-reminder.service';
 import { GetEventQueryType } from './interfaces/event.interface';
 
+@ApiTags('Event')
 @Controller('event')
 export class EventController {
-  constructor(private readonly eventService: EventService) {}
+  constructor(
+    private readonly eventService: EventService,
+    private readonly bookingReminderService: BookingReminderService,
+  ) {}
 
+  @ApiBearerAuth('JWT-auth')
   @Post('create')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CUSTOMER)
@@ -45,6 +52,7 @@ export class EventController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Post(':eventId/confirm')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CHEF)
@@ -79,6 +87,7 @@ export class EventController {
       );
     }
   }
+  @ApiBearerAuth('JWT-auth')
   @Post(':eventId/customer/cancel')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CUSTOMER)
@@ -101,6 +110,7 @@ export class EventController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Post(':eventId/chef/cancel')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CHEF)
@@ -123,6 +133,7 @@ export class EventController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Post(':eventId/ingredients')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CHEF)
@@ -145,6 +156,7 @@ export class EventController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Post(':eventId/accept')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CHEF)
@@ -167,6 +179,7 @@ export class EventController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Get('detail/:eventId')
   @UseGuards(JwtAuthGuard)
   async getEventById(@Param('eventId') eventId: string) {
@@ -180,6 +193,7 @@ export class EventController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Post('attendance/:eventId')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CHEF)
@@ -202,6 +216,7 @@ export class EventController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Put('complete/:eventId')
   @UseGuards(JwtAuthGuard, RolesGuard)
   async completeEvent(
@@ -221,6 +236,7 @@ export class EventController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Get('list')
   @UseGuards(JwtAuthGuard)
   async getEvents(
@@ -241,6 +257,7 @@ export class EventController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Delete(':eventId')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CUSTOMER)
@@ -253,6 +270,66 @@ export class EventController {
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to delete event',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // ==================== BOOKING REMINDER ENDPOINTS ====================
+
+  @ApiBearerAuth('JWT-auth')
+  @Post('reminders/trigger')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  // @Roles(UserRole.ADMIN)
+  async triggerManualReminders() {
+    try {
+      return await this.bookingReminderService.triggerManualReminders();
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to trigger manual reminders',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @ApiBearerAuth('JWT-auth')
+  @Get('reminders/upcoming')
+  @UseGuards(JwtAuthGuard)
+  async getUserUpcomingReminders(
+    @Query('isCustomer') isCustomer: boolean = true,
+    @Req() req: RequestUser,
+  ) {
+    try {
+      return await this.bookingReminderService.getUserUpcomingReminders(
+        req.user._id.toString(),
+        isCustomer,
+      );
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to get upcoming reminders',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @ApiBearerAuth('JWT-auth')
+  @Get('reminders/status')
+  @UseGuards(JwtAuthGuard)
+  async getReminderStatus() {
+    try {
+      return {
+        success: true,
+        message: 'Booking reminder service is active',
+        reminderIntervals: [
+          { hours: 24, label: '24 hours before' },
+          { hours: 2, label: '2 hours before' },
+          { hours: 0.5, label: '30 minutes before' }
+        ],
+        checkFrequency: 'Every 15 minutes'
+      };
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to get reminder status',
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

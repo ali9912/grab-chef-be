@@ -15,6 +15,7 @@ import { ChefSchema } from 'src/chef/schemas/chef.schema';
 import { EventModule } from 'src/event/event.module';
 import { CustomerModule } from 'src/customer/customer.module';
 import { MenuModule } from 'src/menu/menu.module';
+import { NotificationsModule } from 'src/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { MenuModule } from 'src/menu/menu.module';
     EventModule,
     CustomerModule,
     UtilsModule,
+    NotificationsModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
