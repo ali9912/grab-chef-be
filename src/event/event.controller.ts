@@ -12,6 +12,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { RequestUser } from 'src/auth/interfaces/request-user.interface';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -24,10 +25,12 @@ import { CancelBookingDto, ConfirmBookingDto, AcceptBookingDto } from './dto/con
 import { EventService } from './event.service';
 import { GetEventQueryType } from './interfaces/event.interface';
 
+@ApiTags('Event')
 @Controller('event')
 export class EventController {
   constructor(private readonly eventService: EventService) {}
 
+  @ApiBearerAuth('JWT-auth')
   @Post('create')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CUSTOMER)
@@ -45,6 +48,7 @@ export class EventController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Post(':eventId/confirm')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CHEF)
@@ -79,6 +83,7 @@ export class EventController {
       );
     }
   }
+  @ApiBearerAuth('JWT-auth')
   @Post(':eventId/customer/cancel')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CUSTOMER)
@@ -101,6 +106,7 @@ export class EventController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Post(':eventId/chef/cancel')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CHEF)
@@ -123,6 +129,7 @@ export class EventController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Post(':eventId/ingredients')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CHEF)
@@ -145,6 +152,7 @@ export class EventController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Post(':eventId/accept')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CHEF)
@@ -167,6 +175,7 @@ export class EventController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Get('detail/:eventId')
   @UseGuards(JwtAuthGuard)
   async getEventById(@Param('eventId') eventId: string) {
@@ -180,6 +189,7 @@ export class EventController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Post('attendance/:eventId')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CHEF)
@@ -202,6 +212,7 @@ export class EventController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Put('complete/:eventId')
   @UseGuards(JwtAuthGuard, RolesGuard)
   async completeEvent(
@@ -221,6 +232,7 @@ export class EventController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Get('list')
   @UseGuards(JwtAuthGuard)
   async getEvents(
@@ -241,6 +253,7 @@ export class EventController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Delete(':eventId')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CUSTOMER)

@@ -1,9 +1,12 @@
 import { Controller, Post, Body, UseGuards, Req, Get, Query } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ChatService } from './chat.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SendMessageDto, AttachFileDto } from './dto/message.dto';
 import { RequestUser } from '../auth/interfaces/request-user.interface';
 
+@ApiTags('Chat')
+@ApiBearerAuth('JWT-auth')
 @Controller('chat')
 @UseGuards(JwtAuthGuard)
 export class ChatController {

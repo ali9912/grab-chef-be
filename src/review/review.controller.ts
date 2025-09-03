@@ -10,6 +10,7 @@ import {
   Req,
   Get,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ReviewService } from './review.service';
 import { ReviewDto } from './dto/review.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -18,10 +19,12 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/interfaces/user.interface';
 import { RequestUser } from 'src/auth/interfaces/request-user.interface';
 
+@ApiTags('Review')
 @Controller('review')
 export class ReviewController {
   constructor(private readonly reviewService: ReviewService) {}
 
+  @ApiBearerAuth('JWT-auth')
   @Post(':eventId')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CUSTOMER)
@@ -44,6 +47,7 @@ export class ReviewController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Get('chef/:userId')
   @UseGuards(JwtAuthGuard)
   async getReviewsByChefId(@Param('userId') userId: string) {
@@ -60,6 +64,7 @@ export class ReviewController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Get('chef')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CHEF)

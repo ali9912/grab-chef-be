@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MenuService } from './menu.service';
 import { MenuController } from './menu.controller';
 import { PassportModule } from '@nestjs/passport';
@@ -9,6 +9,8 @@ import { MenuSchema } from './schemas/menu.schema';
 import { ChefModule } from 'src/chef/chef.module';
 import { ChefSchema } from 'src/chef/schemas/chef.schema';
 import { UserSchema } from 'src/users/schemas/user.schema';
+import { NotificationsModule } from 'src/notifications/notifications.module';
+import { CustomerSchema } from 'src/customer/schemas/customer.schema';
 
 @Module({
   controllers: [MenuController],
@@ -27,7 +29,9 @@ import { UserSchema } from 'src/users/schemas/user.schema';
     MongooseModule.forFeature([{ name: 'Menu', schema: MenuSchema }]),
     MongooseModule.forFeature([{ name: 'Chef', schema: ChefSchema }]),
     MongooseModule.forFeature([{ name: 'User', schema: UserSchema }]),
+    MongooseModule.forFeature([{ name: 'Customer', schema: CustomerSchema }]),
     ChefModule,
+    forwardRef(() => NotificationsModule),
   ],
   providers: [MenuService],
   exports: [MenuService],

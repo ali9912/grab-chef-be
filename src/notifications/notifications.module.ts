@@ -1,7 +1,9 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { config } from 'dotenv';
 import * as admin from 'firebase-admin';
+import { MenuModule } from 'src/menu/menu.module';
+import { NotificationSchedulerService } from './notification-scheduler.service';
 import { NotificationController } from './notifications.controller';
 import { NotificationsService } from './notifications.service';
 import { NotificationsSchema } from './schemas/notification.schema';
@@ -13,10 +15,11 @@ config();
     MongooseModule.forFeature([
       { name: 'Notifications', schema: NotificationsSchema },
     ]),
+    forwardRef(() => MenuModule),
   ],
-  providers: [NotificationsService],
   controllers: [NotificationController],
-  exports: [NotificationsService],
+  providers: [NotificationsService, NotificationSchedulerService],
+  exports: [NotificationsService, NotificationSchedulerService],
 })
 export class NotificationsModule {
   constructor() {

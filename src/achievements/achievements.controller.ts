@@ -9,6 +9,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AchievementsService } from './achievements.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RequestUser } from 'src/auth/interfaces/request-user.interface';
@@ -17,10 +18,12 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { UserRole } from 'src/users/interfaces/user.interface';
 
+@ApiTags('Achievements')
 @Controller('achievements')
 export class AchievementsController {
   constructor(private readonly achievementsService: AchievementsService) {}
 
+  @ApiBearerAuth('JWT-auth')
   @Post()
   @UseGuards(JwtAuthGuard)
   async create(
@@ -52,6 +55,7 @@ export class AchievementsController {
   //   }
   // }
 
+  @ApiBearerAuth('JWT-auth')
   @Get('/goals')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CHEF)
@@ -67,6 +71,7 @@ export class AchievementsController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Get('/my')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CHEF)
@@ -82,6 +87,7 @@ export class AchievementsController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Get('/chef/:userId')
   @UseGuards(JwtAuthGuard)
   async getChefAchivementGoals(@Param('userId') userId: string) {

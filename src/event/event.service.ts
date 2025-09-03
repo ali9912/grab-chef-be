@@ -98,12 +98,14 @@ export class EventService {
     });
 
     const chefUser = await this.userModel.findById(bookingDto.chefId);
+    const customer = await this.userModel.findById(customerId);
+    const customerName = customer ? `${customer.firstName} ${customer.lastName}`.trim() : 'Customer';
     if (chefUser) {
       await this.notifcationService.sendNotificationToMultipleTokens({
         tokens: chefUser.fcmTokens,
         userId: chefUser._id.toString(),
         title: 'New Event Request',
-        body: 'You have a new event request',
+        body: `${customerName} has requested an event`,
         token: '',
         data: {
           type: 'event-request',
@@ -315,12 +317,14 @@ export class EventService {
     await event.save();
 
     const chefUser = await this.userModel.findById(event.chef);
+    const customer = await this.userModel.findById(event.customer);
+    const customerName = customer ? `${customer.firstName} ${customer.lastName}`.trim() : 'Customer';
     if (chefUser) {
       await this.notifcationService.sendNotificationToMultipleTokens({
         tokens: chefUser.fcmTokens,
         userId: chefUser._id.toString(),
         title: 'Event has been cancelled',
-        body: 'Unfortunately, your event has been cancelled',
+        body: `${customerName} has cancelled your event`,
         token: '',
         data: {
           type: 'customer-event-cancelled',
@@ -367,7 +371,8 @@ export class EventService {
     const eventDateStr = new Date(event.date).toISOString().split('T')[0];
     const chef = await this.chefModel.findOne({ userId });
     const customerUser = event.customer as unknown as User;
-
+    const chefUser = await this.userModel.findById(userId);
+    const chefName = chefUser ? `${chefUser.firstName} ${chefUser.lastName}`.trim() : 'Chef';
     if (!chef) {
       throw new HttpException('Chef not found', HttpStatus.NOT_FOUND);
     }
@@ -400,7 +405,7 @@ export class EventService {
         tokens: customerUser.fcmTokens,
         userId: customerUser._id.toString(),
         title: 'Event has been cancelled',
-        body: 'Unfortunately, your event has been cancelled by the chef.',
+        body: `${chefName} has cancelled your event`,
         token: '',
         data: {
           type: 'chef-event-cancelled',
@@ -556,6 +561,23 @@ export class EventService {
     await this.achievementService.checkForAchievements(chefId);
 
     await event.save();
+
+    const chef = await this.userModel.findById(chefId);
+    const customer = await this.userModel.findById(event.customer);
+    const chefName = chef ? `${chef.firstName} ${chef.lastName}`.trim() : 'Chef';
+    if (customer) {
+      await this.notifcationService.sendNotificationToMultipleTokens({
+        tokens: customer.fcmTokens,
+        userId: customer._id.toString(),
+        title: 'Event has been completed',
+        body: `${chefName} has completed your event`,
+        token: '',
+        data: {
+          type: 'chef-event-completed',
+          data: JSON.stringify(event),
+        },
+      });
+    }
 
     return { message: 'Event has been completed', success: true, event };
   }

@@ -14,7 +14,6 @@ import { MenuModule } from './menu/menu.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ReviewModule } from './review/review.module';
 import { UsersModule } from './users/users.module';
-import { NotificationsService } from './notifications/notifications.service';
 import { PaymentsModule } from './payments/payments.module';
 import { AdminModule } from './admin/admin.module';
 import { ChatModule } from './chat/chat.module';

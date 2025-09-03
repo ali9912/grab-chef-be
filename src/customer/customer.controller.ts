@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, Post, Put, Req, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CustomerService } from './customer.service';
 import { UserRole } from 'src/users/interfaces/user.interface';
 import { Roles } from 'src/auth/decorators/roles.decorator';
@@ -7,10 +8,12 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { RequestUser } from 'src/auth/interfaces/request-user.interface';
 import { LocationDto } from 'src/common/dto/location.dto';
 
+@ApiTags('Customer')
 @Controller('customer')
 export class CustomerController {
   constructor(private readonly customerService: CustomerService) { }
 
+  @ApiBearerAuth('JWT-auth')
   @Get('location')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CUSTOMER)
@@ -26,6 +29,7 @@ export class CustomerController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Post('location')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CUSTOMER)
@@ -41,6 +45,7 @@ export class CustomerController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Put('location/:locationId')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CUSTOMER)
@@ -56,6 +61,7 @@ export class CustomerController {
     }
   }
 
+  @ApiBearerAuth('JWT-auth')
   @Delete('location/:locationId')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CUSTOMER)
