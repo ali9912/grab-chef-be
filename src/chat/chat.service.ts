@@ -76,14 +76,28 @@ export class ChatService {
     return savedMessage;
   }
 
-  async getChatHistory(userId: string, otherUserId: string, eventId: string) {
-    return this.messageModel.find({
+  async getChatHistory(userId: string, otherUserId: string, eventId: string, shouldMarkAsRead: boolean = false) {
+    if (shouldMarkAsRead) {
+      await this.messageModel.updateMany(
+        {
+          eventId,
+          sender: otherUserId,
+          receiver: userId,
+          read: { $ne: true }
+        },
+        { $set: { read: true } }
+      );
+    }
+
+    const messages = await this.messageModel.find({
       eventId,
       $or: [
         { sender: userId, receiver: otherUserId },
         { sender: otherUserId, receiver: userId },
       ],
     }).sort({ createdAt: 1 });
+
+    return messages;
   }
 
   async listMyChats(userId: string) {
