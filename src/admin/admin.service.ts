@@ -116,7 +116,9 @@ export class AdminService {
   async getChefRequests() {
     const chef = await this.chefModel
       .find()
-      .populate('userId');
+      .populate('userId')
+      .where('status', ChefVerificationStatus.PENDING)
+      .sort({ createdAt: -1 });
     return { chef };
   }
 
