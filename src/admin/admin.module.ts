@@ -11,6 +11,7 @@ import { UserSchema } from 'src/users/schemas/user.schema';
 import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
 import { ReviewSchema } from 'src/review/schemas/review.schema';
+import { NotificationsModule } from 'src/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { ReviewSchema } from 'src/review/schemas/review.schema';
     MongooseModule.forFeature([{ name: 'Menu', schema: MenuSchema }]),
     MongooseModule.forFeature([{ name: 'Event', schema: EventSchema }]),
     MongooseModule.forFeature([{ name: 'Review', schema: ReviewSchema }]),
+    NotificationsModule,
   ],
   controllers: [AdminController],
   providers: [AdminService],

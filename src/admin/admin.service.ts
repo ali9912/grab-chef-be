@@ -33,6 +33,7 @@ export class AdminService {
     @InjectModel('Review') private readonly reviewModel: Model<Review>,
 
     private readonly jwtService: JwtService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async loginAdmin(loginAdminDto: AdminLoginDTO) {
@@ -129,10 +130,45 @@ export class AdminService {
     }
     await chef.updateOne({ status }, { new: true });
     await chef.save();
+
+    // Get user details for notification
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+
     if (status === ChefVerificationStatus.APPROVED) {
-      // send notification
+      // Send approval notification
+      if (user.fcmTokens && user.fcmTokens.length > 0) {
+        await this.notificationsService.sendNotificationToMultipleTokens({
+          token: user.fcmTokens[0], // Required by DTO
+          tokens: user.fcmTokens,
+          title: 'Chef Verification Approved! 🎉',
+          body: `Congratulations ${user.firstName}! Your chef verification has been approved. You can now start accepting bookings and serving customers.`,
+          userId: userId,
+          data: {
+            type: 'chef_verification_approved',
+            chefId: chef._id.toString(),
+            status: 'approved'
+          }
+        });
+      }
     } else if (status === ChefVerificationStatus.REJECTED) {
-      // send notification
+      // Send rejection notification
+      if (user.fcmTokens && user.fcmTokens.length > 0) {
+        await this.notificationsService.sendNotificationToMultipleTokens({
+          token: user.fcmTokens[0], // Required by DTO
+          tokens: user.fcmTokens,
+          title: 'Chef Verification Update',
+          body: `Hello ${user.firstName}, your chef verification application has been reviewed. Please check your account for more details and resubmit if needed.`,
+          userId: userId,
+          data: {
+            type: 'chef_verification_rejected',
+            chefId: chef._id.toString(),
+            status: 'rejected'
+          }
+        });
+      }
     }
     return { message: 'Chef status updated.' };
   }
