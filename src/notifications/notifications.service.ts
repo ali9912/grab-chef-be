@@ -79,7 +79,17 @@ export class NotificationsService {
   }
 
   async getUserNotifications(userId: string) {
-    const notifications = await this.notificationModel.find({ user: userId });
+    // Get notifications with unread first, then by creation date descending
+    const notifications = await this.notificationModel
+      .find({ user: userId })
+      .sort({ read: 1, createdAt: -1 }); // read: 1 means false first, createdAt: -1 means newest first
+    
+    // Mark all notifications as read
+    await this.notificationModel.updateMany(
+      { user: userId },
+      { read: true }
+    );
+    
     return { notifications };
   }
 }
