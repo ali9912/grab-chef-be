@@ -7,6 +7,7 @@ import { NotificationSchedulerService } from './notification-scheduler.service';
 import { NotificationController } from './notifications.controller';
 import { NotificationsService } from './notifications.service';
 import { NotificationsSchema } from './schemas/notification.schema';
+var serviceAccount = require('../../grab-chef-service.json');
 
 config();
 
@@ -23,14 +24,16 @@ config();
 })
 export class NotificationsModule {
   constructor() {
-    if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
-      admin.initializeApp({
-        credential: admin.credential.cert({
-          projectId: process.env.FIREBASE_PROJECT_ID,
-          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-          privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-        }),
-      });
-    }
+    admin.initializeApp({
+      // credential: admin.credential.cert({
+      //   // projectId: process.env.FIREBASE_PROJECT_ID,
+      //   // clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      //   // privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      //   projectId: process.env.FIREBASE_PROJECT_ID,
+      //   clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      //   privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      // }),
+      credential: admin.credential.cert(serviceAccount),
+    });
   }
 }
