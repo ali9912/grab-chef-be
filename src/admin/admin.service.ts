@@ -160,7 +160,7 @@ export class AdminService {
           token: user.fcmTokens[0], // Required by DTO
           tokens: user.fcmTokens,
           title: 'Chef Verification Update',
-          body: `Hello ${user.firstName}, your chef verification application has been reviewed. Please check your account for more details and resubmit if needed.`,
+          body: `Hello ${user.firstName}, your chef verification application has been rejected. Please check your account for more details and resubmit if needed.`,
           userId: userId,
           data: {
             type: 'chef_verification_rejected',
